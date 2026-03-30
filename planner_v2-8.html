@@ -1,0 +1,2480 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="theme-color" content="#0e0e10">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="GRAVIT">
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="icon-192.png">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>GRAVIT — Strategic Planner</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=DM+Mono:ital,wght@0,300;0,400;0,500;1,300&family=Syne:wght@400;500;600;700;800&family=Instrument+Serif:ital@0;1&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #0e0e10; --surface: #17171a; --surface2: #1f1f24; --surface3: #28282f;
+  --border: #2e2e38; --border2: #3a3a48;
+  --text: #e8e8f0; --text2: #9090a8; --text3: #5a5a72;
+  --accent: #c8ff57; --accent2: #57c8ff; --accent3: #ff7557; --accent4: #b557ff;
+  --done: #57ff9a; --pending: #ff9a57;
+  --cat1: #c8ff57; --cat2: #57c8ff; --cat3: #ff7557; --cat4: #b557ff; --cat5: #57ffda;
+}
+* { margin:0; padding:0; box-sizing:border-box; }
+body { background:var(--bg); color:var(--text); font-family:'DM Mono',monospace; font-size:13px; min-height:100vh; overflow-x:hidden; }
+body::before { content:''; position:fixed; inset:0; background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.04'/%3E%3C/svg%3E"); pointer-events:none; z-index:999; opacity:0.4; }
+
+/* HEADER */
+.header { display:flex; align-items:center; justify-content:space-between; padding:14px 24px; border-bottom:1px solid var(--border); background:var(--surface); position:sticky; top:0; z-index:100; flex-wrap:wrap; gap:10px; }
+.logo { display:flex; align-items:center; gap:10px; text-decoration:none; cursor:default; }
+.logo-mark { width:32px; height:32px; position:relative; flex-shrink:0; }
+.logo-mark svg { width:32px; height:32px; }
+.logo-text { display:flex; flex-direction:column; gap:1px; }
+.logo-wordmark { font-family:'Syne',sans-serif; font-weight:800; font-size:18px; letter-spacing:5px; color:var(--accent); line-height:1; }
+.logo-wordmark em { font-style:normal; color:var(--text); }
+.logo-sub { font-family:'DM Mono',monospace; font-size:9px; letter-spacing:3px; color:var(--text3); text-transform:uppercase; line-height:1; }
+.nav-tabs { display:flex; gap:2px; background:var(--bg); padding:3px; border-radius:8px; }
+.nav-tab { padding:7px 14px; border:none; background:transparent; color:var(--text3); font-family:'DM Mono',monospace; font-size:11px; letter-spacing:1px; cursor:pointer; border-radius:6px; transition:all 0.2s; text-transform:uppercase; }
+.nav-tab.active { background:var(--surface2); color:var(--text); }
+.date-nav { display:flex; align-items:center; gap:8px; }
+.date-nav button { width:28px; height:28px; border:1px solid var(--border); background:var(--surface2); color:var(--text2); cursor:pointer; border-radius:6px; display:flex; align-items:center; justify-content:center; transition:all 0.2s; font-size:14px; }
+.date-nav button:hover { border-color:var(--accent); color:var(--accent); }
+.date-nav .today-btn { width:auto; padding:0 10px; font-size:11px; font-family:'DM Mono',monospace; }
+.date-picker-btn { font-size:15px !important; }
+.date-display { font-family:'Syne',sans-serif; font-weight:600; font-size:14px; color:var(--text); min-width:150px; text-align:center; }
+.today-badge { background:var(--accent); color:#000; font-size:9px; letter-spacing:1px; padding:2px 6px; border-radius:4px; font-weight:600; text-transform:uppercase; margin-left:6px; }
+#syncStatus { font-size:10px; letter-spacing:1px; color:var(--text3); }
+
+/* PAGES */
+.page { display:none; }
+.page.active { display:block; }
+
+/* DAILY GRID */
+.daily-grid { display:grid; grid-template-columns:1fr 1fr; height:calc(100vh - 61px); }
+.panel { padding:20px; overflow-y:auto; border-right:1px solid var(--border); }
+.panel:last-child { border-right:none; }
+.panel-title { font-family:'Syne',sans-serif; font-size:11px; font-weight:600; letter-spacing:3px; text-transform:uppercase; color:var(--text3); margin-bottom:14px; display:flex; align-items:center; gap:8px; }
+.panel-title::after { content:''; flex:1; height:1px; background:var(--border); }
+
+/* KPI */
+.kpi-bar { background:var(--surface2); border:1px solid var(--border); border-radius:10px; padding:12px 16px; margin-bottom:16px; display:flex; align-items:center; gap:16px; }
+.kpi-stat { text-align:center; }
+.kpi-val { font-family:'Syne',sans-serif; font-weight:700; font-size:20px; line-height:1; }
+.kpi-label { font-size:10px; color:var(--text3); letter-spacing:1px; text-transform:uppercase; margin-top:2px; }
+.kpi-divider { width:1px; height:32px; background:var(--border); }
+.kpi-progress-wrap { flex:1; }
+.kpi-progress-label { font-size:10px; color:var(--text3); margin-bottom:4px; display:flex; justify-content:space-between; }
+.kpi-progress { height:6px; background:var(--surface3); border-radius:99px; overflow:hidden; }
+.kpi-progress-fill { height:100%; background:var(--accent); border-radius:99px; transition:width 0.5s ease; }
+
+/* TEMPLATE BAR */
+.tpl-bar { display:flex; align-items:center; gap:6px; margin-bottom:14px; flex-wrap:wrap; }
+.tpl-bar-label { font-size:10px; color:var(--text3); letter-spacing:1px; text-transform:uppercase; flex-shrink:0; }
+.tpl-quick-btn { padding:4px 12px; border:1px solid var(--border2); background:var(--surface2); color:var(--accent4); font-family:'DM Mono',monospace; font-size:11px; border-radius:20px; cursor:pointer; transition:all 0.15s; }
+.tpl-quick-btn:hover { border-color:var(--accent4); background:rgba(181,87,255,0.1); }
+.tpl-manage-btn { padding:4px 10px; border:1px dashed var(--border2); background:transparent; color:var(--text3); font-family:'DM Mono',monospace; font-size:11px; border-radius:20px; cursor:pointer; transition:all 0.15s; }
+.tpl-manage-btn:hover { border-color:var(--accent); color:var(--accent); }
+
+/* BIG 3 */
+.big3-item { display:flex; gap:10px; margin-bottom:10px; align-items:flex-start; }
+.big3-num { width:26px; height:26px; background:var(--surface2); border:1px solid var(--border2); border-radius:6px; display:flex; align-items:center; justify-content:center; font-family:'Syne',sans-serif; font-weight:700; font-size:12px; color:var(--accent); flex-shrink:0; margin-top:3px; }
+.big3-input { flex:1; background:var(--surface2); border:1px solid var(--border); border-radius:8px; padding:7px 11px; color:var(--text); font-family:'DM Mono',monospace; font-size:13px; resize:none; min-height:34px; outline:none; transition:border-color 0.2s; line-height:1.5; }
+.big3-input:focus { border-color:var(--accent); }
+.big3-input::placeholder { color:var(--text3); }
+.big3-check { width:18px; height:18px; border:2px solid var(--border2); border-radius:4px; cursor:pointer; flex-shrink:0; margin-top:7px; appearance:none; -webkit-appearance:none; background:transparent; position:relative; transition:all 0.2s; }
+.big3-check:checked { background:var(--accent); border-color:var(--accent); }
+.big3-check:checked::after { content:'✓'; position:absolute; top:50%; left:50%; transform:translate(-50%,-50%); font-size:11px; color:#000; font-weight:700; }
+
+/* BRAIN DUMP */
+.brain-dump-list { margin-bottom:10px; }
+.brain-item { display:flex; align-items:center; gap:8px; padding:7px 10px; background:var(--surface2); border:1px solid var(--border); border-radius:8px; margin-bottom:5px; transition:all 0.2s; }
+.brain-item:hover { border-color:var(--border2); }
+.brain-check { width:15px; height:15px; border:2px solid var(--border2); border-radius:3px; cursor:pointer; flex-shrink:0; appearance:none; -webkit-appearance:none; background:transparent; position:relative; transition:all 0.15s; }
+.brain-check:checked { background:var(--done); border-color:var(--done); }
+.brain-check:checked::after { content:'✓'; position:absolute; top:50%; left:50%; transform:translate(-50%,-50%); font-size:9px; color:#000; font-weight:700; }
+.brain-text { flex:1; background:transparent; border:none; color:var(--text); font-family:'DM Mono',monospace; font-size:12px; outline:none; }
+.brain-text::placeholder { color:var(--text3); }
+.brain-item.done .brain-text { text-decoration:line-through; color:var(--text3); }
+.brain-delete { width:18px; height:18px; border:none; background:transparent; color:var(--text3); cursor:pointer; border-radius:4px; display:flex; align-items:center; justify-content:center; font-size:14px; opacity:0; transition:opacity 0.2s; }
+.brain-item:hover .brain-delete { opacity:1; }
+.brain-delete:hover { color:var(--accent3); }
+.add-btn { width:100%; padding:7px; background:transparent; border:1px dashed var(--border2); border-radius:8px; color:var(--text3); font-family:'DM Mono',monospace; font-size:12px; cursor:pointer; transition:all 0.2s; display:flex; align-items:center; justify-content:center; gap:6px; }
+.add-btn:hover { border-color:var(--accent); color:var(--accent); }
+
+/* REFLECTION */
+.reflect-section { margin-top:16px; }
+.reflect-tabs { display:flex; gap:4px; margin-bottom:10px; }
+.reflect-tab { padding:5px 12px; border:1px solid var(--border); background:transparent; color:var(--text3); font-family:'DM Mono',monospace; font-size:11px; cursor:pointer; border-radius:6px; transition:all 0.2s; }
+.reflect-tab.active { background:var(--surface3); border-color:var(--border2); color:var(--text); }
+.reflect-area { width:100%; min-height:80px; background:var(--surface2); border:1px solid var(--border); border-radius:8px; padding:10px 12px; color:var(--text); font-family:'Instrument Serif',serif; font-size:14px; line-height:1.6; resize:vertical; outline:none; transition:border-color 0.2s; }
+.reflect-area:focus { border-color:var(--accent2); }
+.reflect-area::placeholder { color:var(--text3); font-family:'DM Mono',monospace; font-size:12px; }
+
+/* TIMEBOX */
+.timebox-container { position:relative; }
+.time-axis { display:flex; flex-direction:column; }
+.time-row { display:flex; min-height:44px; border-bottom:1px solid var(--border); position:relative; cursor:pointer; transition:background 0.1s; align-items:stretch; }
+.time-row:hover { background:rgba(255,255,255,0.02); }
+.time-row.half-hour { border-bottom:1px dashed rgba(46,46,56,0.6); min-height:38px; }
+.time-label { width:52px; padding:6px 8px 0 0; font-size:10px; color:var(--text3); letter-spacing:0.5px; flex-shrink:0; }
+.time-label.half { color:transparent; }
+.slot-content { flex:1; padding:4px 6px; display:flex; flex-direction:column; justify-content:center; }
+.slot-empty-hint { font-size:11px; color:var(--text3); opacity:0; transition:opacity 0.2s; }
+.time-row:hover .slot-empty-hint { opacity:1; }
+
+/* TIMEBOX BLOCK spanning multiple slots */
+.tb-block { position:absolute; left:56px; right:4px; border-radius:8px; padding:6px 10px; z-index:10; cursor:pointer; transition:opacity 0.15s; overflow:hidden; }
+.tb-block:hover { opacity:0.85; }
+.tb-block-cat { font-size:9px; letter-spacing:1px; text-transform:uppercase; opacity:0.7; margin-bottom:2px; }
+.tb-block-title { font-size:12px; font-weight:500; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.tb-block-detail { font-size:10px; opacity:0.6; margin-top:1px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.tb-block-time { font-size:9px; opacity:0.6; margin-top:2px; }
+
+/* cat colors */
+.cat-work { background:rgba(200,255,87,0.12); color:var(--cat1); border:1px solid rgba(200,255,87,0.25); }
+.cat-health { background:rgba(87,200,255,0.12); color:var(--cat2); border:1px solid rgba(87,200,255,0.25); }
+.cat-personal { background:rgba(255,117,87,0.12); color:var(--cat3); border:1px solid rgba(255,117,87,0.25); }
+.cat-learning { background:rgba(181,87,255,0.12); color:var(--cat4); border:1px solid rgba(181,87,255,0.25); }
+.cat-free { background:rgba(87,255,218,0.12); color:var(--cat5); border:1px solid rgba(87,255,218,0.25); }
+.dot-work{background:var(--cat1)} .dot-health{background:var(--cat2)} .dot-personal{background:var(--cat3)} .dot-learning{background:var(--cat4)} .dot-free{background:var(--cat5)}
+
+/* MODAL base */
+.modal-overlay { display:none; position:fixed; inset:0; background:rgba(0,0,0,0.72); backdrop-filter:blur(4px); z-index:200; align-items:center; justify-content:center; }
+.modal-overlay.open { display:flex; }
+.modal { background:var(--surface); border:1px solid var(--border2); border-radius:14px; padding:24px; width:460px; max-width:95vw; animation:modalIn 0.2s ease; max-height:90vh; overflow-y:auto; }
+@keyframes modalIn { from{opacity:0;transform:scale(0.95) translateY(10px)} to{opacity:1;transform:none} }
+.modal-title { font-family:'Syne',sans-serif; font-weight:700; font-size:16px; margin-bottom:18px; }
+.field-label { font-size:10px; letter-spacing:2px; text-transform:uppercase; color:var(--text3); margin-bottom:6px; }
+.field-wrap { margin-bottom:14px; }
+.modal-input, .modal-textarea, .modal-select { width:100%; background:var(--surface2); border:1px solid var(--border); border-radius:8px; padding:8px 12px; color:var(--text); font-family:'DM Mono',monospace; font-size:13px; outline:none; transition:border-color 0.2s; }
+.modal-input:focus, .modal-textarea:focus, .modal-select:focus { border-color:var(--accent); }
+.modal-textarea { resize:vertical; min-height:60px; line-height:1.5; }
+.modal-select option { background:var(--surface2); }
+.modal-actions { display:flex; gap:8px; justify-content:flex-end; margin-top:18px; }
+.btn-cancel { padding:8px 16px; background:transparent; border:1px solid var(--border); border-radius:8px; color:var(--text2); font-family:'DM Mono',monospace; font-size:12px; cursor:pointer; transition:all 0.2s; }
+.btn-cancel:hover { border-color:var(--border2); color:var(--text); }
+.btn-save { padding:8px 16px; background:var(--accent); border:none; border-radius:8px; color:#000; font-family:'DM Mono',monospace; font-size:12px; font-weight:500; cursor:pointer; transition:all 0.2s; }
+.btn-save:hover { background:#d4ff6b; }
+.btn-danger { padding:8px 12px; background:transparent; border:1px solid var(--accent3); border-radius:8px; color:var(--accent3); font-family:'DM Mono',monospace; font-size:12px; cursor:pointer; margin-right:auto; transition:all 0.2s; }
+.btn-danger:hover { background:var(--accent3); color:#000; }
+
+/* TIMEBOX MODAL specifics */
+.time-range-row { display:flex; gap:10px; align-items:center; }
+.time-range-sep { color:var(--text3); font-size:12px; flex-shrink:0; }
+.cat-pills { display:flex; gap:6px; flex-wrap:wrap; }
+.cat-pill-btn { padding:5px 12px; border-radius:20px; border:2px solid transparent; cursor:pointer; font-family:'DM Mono',monospace; font-size:11px; font-weight:500; transition:all 0.15s; opacity:0.45; }
+.cat-pill-btn.selected { opacity:1; }
+
+/* Brain dump pick list */
+.brain-pick-list { background:var(--surface2); border:1px solid var(--border); border-radius:8px; max-height:130px; overflow-y:auto; margin-top:6px; }
+.brain-pick-item { padding:7px 12px; cursor:pointer; font-size:12px; color:var(--text2); transition:all 0.15s; border-bottom:1px solid var(--border); display:flex; align-items:center; gap:8px; }
+.brain-pick-item:last-child { border-bottom:none; }
+.brain-pick-item:hover { background:var(--surface3); color:var(--text); }
+.brain-pick-item.picked { color:var(--accent); }
+.brain-pick-empty { padding:12px; font-size:12px; color:var(--text3); text-align:center; }
+
+/* CALENDAR */
+.calendar-wrap { padding:20px; max-width:900px; margin:0 auto; }
+.cal-header { display:flex; align-items:center; justify-content:space-between; margin-bottom:20px; }
+.cal-month-title { font-family:'Syne',sans-serif; font-weight:800; font-size:24px; }
+.cal-nav-btn { width:36px; height:36px; border:1px solid var(--border); background:var(--surface); color:var(--text2); cursor:pointer; border-radius:8px; font-size:16px; transition:all 0.2s; display:flex; align-items:center; justify-content:center; }
+.cal-nav-btn:hover { border-color:var(--accent); color:var(--accent); }
+.cal-grid { display:grid; grid-template-columns:repeat(7,1fr); gap:4px; }
+.cal-day-header { text-align:center; font-size:10px; letter-spacing:2px; text-transform:uppercase; color:var(--text3); padding:8px 4px; }
+.cal-cell { background:var(--surface); border:1px solid var(--border); border-radius:10px; padding:10px; min-height:76px; cursor:pointer; transition:all 0.2s; position:relative; overflow:hidden; }
+.cal-cell:hover { border-color:var(--border2); }
+.cal-cell.today { border-color:var(--accent); }
+.cal-cell.empty { background:transparent; border-color:transparent; cursor:default; }
+.cal-cell.selected { background:var(--surface2); border-color:var(--accent2); }
+.cal-cell.has-pending::before { content:''; position:absolute; top:6px; right:6px; width:6px; height:6px; border-radius:50%; background:var(--pending); }
+.cal-date-num { font-family:'Syne',sans-serif; font-weight:600; font-size:15px; color:var(--text2); margin-bottom:3px; }
+.cal-cell.today .cal-date-num { color:var(--accent); }
+.cal-kpi-text { font-size:10px; color:var(--text3); line-height:1.4; }
+.cal-kpi-done { color:var(--done); }
+.cal-kpi-pending { color:var(--pending); }
+
+/* STATS */
+.stats-wrap { padding:20px; max-width:900px; margin:0 auto; }
+.stats-toggle { display:flex; gap:4px; background:var(--surface); padding:4px; border-radius:10px; width:fit-content; margin-bottom:24px; border:1px solid var(--border); }
+.stats-toggle-btn { padding:7px 20px; border:none; background:transparent; color:var(--text3); font-family:'DM Mono',monospace; font-size:11px; letter-spacing:1px; text-transform:uppercase; cursor:pointer; border-radius:7px; transition:all 0.2s; }
+.stats-toggle-btn.active { background:var(--surface3); color:var(--text); }
+.stats-grid { display:grid; grid-template-columns:1fr 2fr 1fr 1fr; gap:12px; margin-bottom:24px; }
+.stat-card { background:var(--surface); border:1px solid var(--border); border-radius:12px; padding:16px; }
+.stat-card-clickable { cursor:default; }
+.stat-half { flex:1; cursor:pointer; padding:4px 6px; border-radius:8px; transition:background 0.15s; }
+.stat-half:hover { background:var(--surface2); }
+
+/* STATS LIST MODAL */
+.stats-list-modal { background:var(--surface); border:1px solid var(--border2); border-radius:14px; padding:24px; width:500px; max-width:95vw; animation:modalIn 0.2s ease; max-height:80vh; overflow-y:auto; }
+.stats-list-group { margin-bottom:14px; }
+.stats-list-date { font-size:11px; color:var(--text3); letter-spacing:1px; text-transform:uppercase; margin-bottom:6px; padding-bottom:4px; border-bottom:1px solid var(--border); }
+.stats-list-item { display:flex; align-items:center; gap:8px; padding:6px 10px; border-radius:7px; margin-bottom:3px; font-size:12px; }
+.stats-list-item.done-item { background:rgba(87,255,154,0.06); color:var(--text2); }
+.stats-list-item.pending-item { background:rgba(255,154,87,0.06); color:var(--text2); }
+.stats-list-type { font-size:9px; letter-spacing:1px; text-transform:uppercase; color:var(--text3); width:36px; flex-shrink:0; }
+.stats-list-send { padding:3px 8px; border:1px solid var(--border2); background:transparent; color:var(--text3); font-family:"DM Mono",monospace; font-size:10px; border-radius:5px; cursor:pointer; margin-left:auto; flex-shrink:0; transition:all 0.15s; }
+.stats-list-send:hover { border-color:var(--accent2); color:var(--accent2); }
+.stat-card-val { font-family:'Syne',sans-serif; font-weight:800; font-size:32px; color:var(--text); line-height:1; margin-bottom:4px; }
+.stat-card-label { font-size:10px; color:var(--text3); letter-spacing:1px; text-transform:uppercase; }
+.chart-section { background:var(--surface); border:1px solid var(--border); border-radius:12px; padding:20px; margin-bottom:16px; }
+.chart-title { font-family:'Syne',sans-serif; font-size:12px; font-weight:600; letter-spacing:2px; text-transform:uppercase; color:var(--text3); margin-bottom:16px; }
+.bar-chart { display:flex; align-items:flex-end; gap:6px; height:120px; }
+.bar-wrap { flex:1; display:flex; flex-direction:column; align-items:center; gap:4px; height:100%; justify-content:flex-end; }
+.bar { width:100%; border-radius:4px 4px 0 0; transition:height 0.5s ease; min-height:4px; background:var(--surface3); }
+.bar.filled { background:var(--accent); }
+.bar.today-bar { background:var(--accent2); }
+.bar-label { font-size:9px; color:var(--text3); letter-spacing:0.5px; }
+.cat-breakdown { display:grid; grid-template-columns:repeat(5,1fr); gap:8px; }
+.cat-item { background:var(--surface2); border-radius:8px; padding:12px; border-left:3px solid var(--border); cursor:pointer; transition:all 0.15s; }
+.cat-item:hover { background:var(--surface3); transform:translateY(-1px); }
+.cat-name { font-size:11px; color:var(--text2); margin-bottom:6px; }
+.cat-count { font-family:'Syne',sans-serif; font-weight:700; font-size:22px; line-height:1; margin-bottom:4px; }
+.cat-hours { font-size:10px; color:var(--text3); margin-top:2px; }
+.cat-bar { height:3px; background:var(--surface3); border-radius:2px; margin-top:8px; overflow:hidden; }
+.cat-bar-fill { height:100%; border-radius:2px; transition:width 0.5s ease; }
+
+/* TEMPLATE PAGE */
+.tpl-page-wrap { padding:20px; max-width:800px; margin:0 auto; }
+.tpl-page-header { display:flex; align-items:center; justify-content:space-between; margin-bottom:20px; }
+.tpl-page-title { font-family:'Syne',sans-serif; font-weight:800; font-size:22px; }
+.tpl-list-grid { display:grid; gap:10px; }
+.tpl-card { background:var(--surface); border:1px solid var(--border); border-radius:12px; padding:16px 20px; display:flex; align-items:flex-start; justify-content:space-between; gap:12px; transition:border-color 0.2s; }
+.tpl-card:hover { border-color:var(--border2); }
+.tpl-card-info { flex:1; }
+.tpl-card-name { font-family:'Syne',sans-serif; font-weight:700; font-size:15px; margin-bottom:6px; }
+.tpl-card-preview { font-size:11px; color:var(--text3); line-height:1.6; }
+.tpl-card-actions { display:flex; gap:6px; flex-shrink:0; }
+.tpl-card-btn { padding:6px 14px; border-radius:8px; font-family:'DM Mono',monospace; font-size:11px; cursor:pointer; transition:all 0.15s; }
+.tpl-apply-card-btn { background:rgba(181,87,255,0.15); border:1px solid var(--accent4); color:var(--accent4); }
+.tpl-apply-card-btn:hover { background:var(--accent4); color:#fff; }
+.tpl-edit-card-btn { background:var(--surface2); border:1px solid var(--border); color:var(--text2); }
+.tpl-edit-card-btn:hover { border-color:var(--accent2); color:var(--accent2); }
+.tpl-del-card-btn { background:transparent; border:1px solid var(--border); color:var(--text3); }
+.tpl-del-card-btn:hover { border-color:var(--accent3); color:var(--accent3); }
+.tpl-empty-state { text-align:center; padding:60px 20px; color:var(--text3); }
+.tpl-empty-state div:first-child { font-size:40px; margin-bottom:12px; }
+.tpl-empty-state div:last-child { font-size:13px; line-height:1.7; }
+
+/* TEMPLATE EDITOR MODAL */
+.tpl-editor { background:var(--surface); border:1px solid var(--border2); border-radius:14px; padding:24px; width:560px; max-width:95vw; animation:modalIn 0.2s ease; max-height:90vh; overflow-y:auto; }
+.tpl-editor-section { margin-bottom:20px; }
+.tpl-editor-section-title { font-family:'Syne',sans-serif; font-size:11px; font-weight:600; letter-spacing:3px; text-transform:uppercase; color:var(--text3); margin-bottom:10px; display:flex; align-items:center; gap:8px; }
+.tpl-editor-section-title::after { content:''; flex:1; height:1px; background:var(--border); }
+.tpl-big3-row { display:flex; gap:8px; margin-bottom:6px; align-items:center; }
+.tpl-big3-num { width:22px; height:22px; background:var(--surface3); border-radius:5px; display:flex; align-items:center; justify-content:center; font-family:'Syne',sans-serif; font-weight:700; font-size:11px; color:var(--accent); flex-shrink:0; }
+.tpl-big3-input { flex:1; background:var(--surface2); border:1px solid var(--border); border-radius:7px; padding:7px 10px; color:var(--text); font-family:'DM Mono',monospace; font-size:12px; outline:none; transition:border-color 0.2s; }
+.tpl-big3-input:focus { border-color:var(--accent); }
+.tpl-big3-input::placeholder { color:var(--text3); }
+.tpl-brain-row { display:flex; gap:8px; margin-bottom:5px; align-items:center; }
+.tpl-brain-input { flex:1; background:var(--surface2); border:1px solid var(--border); border-radius:7px; padding:7px 10px; color:var(--text); font-family:'DM Mono',monospace; font-size:12px; outline:none; }
+.tpl-brain-input::placeholder { color:var(--text3); }
+.tpl-brain-input:focus { border-color:var(--accent); }
+.tpl-row-del { width:22px; height:22px; border:none; background:transparent; color:var(--text3); cursor:pointer; font-size:16px; border-radius:4px; display:flex; align-items:center; justify-content:center; transition:color 0.15s; flex-shrink:0; }
+.tpl-row-del:hover { color:var(--accent3); }
+.tpl-add-row-btn { width:100%; padding:7px; background:transparent; border:1px dashed var(--border2); border-radius:7px; color:var(--text3); font-family:'DM Mono',monospace; font-size:12px; cursor:pointer; transition:all 0.2s; }
+.tpl-add-row-btn:hover { border-color:var(--accent); color:var(--accent); }
+
+/* TIMEBOX in template */
+.tpl-tb-row { display:flex; gap:8px; align-items:center; margin-bottom:6px; flex-wrap:wrap; }
+.tpl-tb-time { font-size:11px; color:var(--accent2); background:var(--surface2); border:1px solid var(--border); border-radius:6px; padding:4px 8px; flex-shrink:0; }
+.tpl-tb-cat-dot { width:8px; height:8px; border-radius:50%; flex-shrink:0; }
+.tpl-tb-title { flex:1; font-size:12px; color:var(--text); min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.tpl-tb-del { width:20px; height:20px; border:none; background:transparent; color:var(--text3); cursor:pointer; font-size:14px; border-radius:4px; display:flex; align-items:center; justify-content:center; flex-shrink:0; }
+.tpl-tb-del:hover { color:var(--accent3); }
+
+
+/* PENDING */
+.pending-section { margin-top:18px; border-top:1px solid var(--border); padding-top:16px; }
+.pending-header { display:flex; align-items:center; justify-content:space-between; margin-bottom:10px; cursor:pointer; }
+.pending-header-left { display:flex; align-items:center; gap:8px; }
+.pending-toggle-icon { font-size:11px; color:var(--text3); transition:transform 0.2s; }
+.pending-toggle-icon.open { transform:rotate(180deg); }
+.pending-badge { background:var(--pending); color:#000; font-size:10px; font-weight:700; padding:2px 7px; border-radius:10px; font-family:"Syne",sans-serif; }
+.pending-body { display:none; }
+.pending-body.open { display:block; }
+.pending-date-group { margin-bottom:12px; }
+.pending-date-label { font-size:10px; color:var(--text3); letter-spacing:1px; text-transform:uppercase; margin-bottom:6px; display:flex; align-items:center; gap:6px; }
+.pending-date-label::after { content:''; flex:1; height:1px; background:var(--border); }
+.pending-item { display:flex; align-items:center; gap:8px; padding:6px 10px; background:var(--surface2); border:1px solid var(--border); border-radius:7px; margin-bottom:4px; transition:all 0.15s; }
+.pending-item:hover { border-color:var(--border2); }
+.pending-item-type { font-size:9px; color:var(--text3); letter-spacing:1px; text-transform:uppercase; flex-shrink:0; width:40px; }
+.pending-item-type.big3 { color:var(--accent); }
+.pending-item-type.brain { color:var(--accent2); }
+.pending-item-type.tb { color:var(--accent4); }
+.pending-item-text { flex:1; font-size:12px; color:var(--text2); overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.pending-item-actions { display:flex; gap:4px; flex-shrink:0; opacity:0; transition:opacity 0.15s; }
+.pending-item:hover .pending-item-actions { opacity:1; }
+.pend-send-btn { padding:3px 8px; border-radius:5px; font-family:"DM Mono",monospace; font-size:10px; cursor:pointer; border:1px solid var(--border2); background:transparent; color:var(--text3); transition:all 0.15s; white-space:nowrap; }
+.pend-send-btn:hover { background:var(--surface3); color:var(--text); }
+.pend-send-btn.to-big3:hover { border-color:var(--accent); color:var(--accent); }
+.pend-send-btn.to-brain:hover { border-color:var(--accent2); color:var(--accent2); }
+.pend-send-btn.to-tb:hover { border-color:var(--accent4); color:var(--accent4); }
+.pending-empty { font-size:12px; color:var(--text3); text-align:center; padding:16px 0; }
+
+/* PENDING PAGE */
+.pending-page-wrap { padding:20px; max-width:800px; margin:0 auto; }
+.pending-page-title { font-family:"Syne",sans-serif; font-weight:800; font-size:22px; margin-bottom:20px; }
+.pending-filter-row { display:flex; gap:6px; margin-bottom:16px; flex-wrap:wrap; }
+.pf-btn { padding:5px 14px; border:1px solid var(--border); background:transparent; color:var(--text3); font-family:"DM Mono",monospace; font-size:11px; border-radius:20px; cursor:pointer; transition:all 0.15s; }
+.pf-btn.active { background:var(--surface2); border-color:var(--border2); color:var(--text); }
+.pf-today-toggle { padding:4px 10px; border:1px solid var(--border); background:transparent; color:var(--text3); font-family:"DM Mono",monospace; font-size:10px; letter-spacing:0; border-radius:20px; cursor:pointer; transition:all 0.15s; margin-left:auto; white-space:nowrap; }
+.pf-today-toggle.on { border-color:var(--pending); color:var(--pending); background:rgba(255,154,87,0.08); }
+
+/* PICK FROM PENDING MODAL */
+.pick-pending-list { background:var(--surface2); border:1px solid var(--border); border-radius:8px; max-height:200px; overflow-y:auto; margin-top:6px; }
+.pick-pending-item { padding:8px 12px; cursor:pointer; font-size:12px; color:var(--text2); transition:all 0.15s; border-bottom:1px solid var(--border); display:flex; align-items:center; gap:8px; }
+.pick-pending-item:last-child { border-bottom:none; }
+.pick-pending-item:hover { background:var(--surface3); color:var(--text); }
+.pick-pending-item .ppi-type { font-size:9px; color:var(--text3); letter-spacing:1px; text-transform:uppercase; flex-shrink:0; width:36px; }
+.pick-pending-item .ppi-date { font-size:10px; color:var(--text3); flex-shrink:0; }
+.pick-pending-empty { padding:16px; font-size:12px; color:var(--text3); text-align:center; }
+
+
+/* SEND TO DATE MODAL */
+.send-date-modal { background:var(--surface); border:1px solid var(--border2); border-radius:14px; padding:24px; width:380px; max-width:95vw; animation:modalIn 0.2s ease; }
+.send-date-shortcuts { display:flex; gap:6px; flex-wrap:wrap; margin-bottom:14px; }
+.send-date-shortcut { padding:6px 14px; border:1px solid var(--border2); background:var(--surface2); color:var(--text2); font-family:"DM Mono",monospace; font-size:12px; border-radius:20px; cursor:pointer; transition:all 0.15s; }
+.send-date-shortcut:hover { border-color:var(--accent2); color:var(--accent2); }
+.send-date-shortcut.active { border-color:var(--accent2); color:var(--accent2); background:rgba(87,200,255,0.1); }
+.send-date-input { width:100%; background:var(--surface2); border:1px solid var(--border); border-radius:8px; padding:9px 12px; color:var(--text); font-family:"DM Mono",monospace; font-size:13px; outline:none; margin-bottom:6px; }
+.send-date-input:focus { border-color:var(--accent2); }
+.send-date-target-btns { display:flex; gap:6px; margin-top:14px; flex-wrap:wrap; }
+.send-date-target-btn { flex:1; padding:9px; border-radius:8px; font-family:"DM Mono",monospace; font-size:11px; cursor:pointer; transition:all 0.15s; text-align:center; }
+.sdt-big3 { background:rgba(200,255,87,0.1); border:1px solid var(--accent); color:var(--accent); }
+.sdt-big3:hover { background:rgba(200,255,87,0.2); }
+.sdt-brain { background:rgba(87,200,255,0.1); border:1px solid var(--accent2); color:var(--accent2); }
+.sdt-brain:hover { background:rgba(87,200,255,0.2); }
+.sdt-tb { background:rgba(181,87,255,0.1); border:1px solid var(--accent4); color:var(--accent4); }
+.sdt-tb:hover { background:rgba(181,87,255,0.2); }
+
+
+/* TB PICK TABS */
+.tb-pick-tabs { display:flex; gap:4px; margin-top:6px; margin-bottom:0; }
+.tb-pick-tab { flex:1; padding:5px; border:1px solid var(--border); background:transparent; color:var(--text3); font-family:"DM Mono",monospace; font-size:10px; letter-spacing:1px; text-transform:uppercase; cursor:pointer; border-radius:6px; transition:all 0.15s; text-align:center; }
+.tb-pick-tab.active { background:var(--surface3); border-color:var(--border2); color:var(--text); }
+
+
+/* CUSTOM TIME DROPDOWN */
+.time-dropdown { flex:1; position:relative; }
+.time-dropdown-btn { width:100%; background:var(--surface2); border:1px solid var(--border); border-radius:8px; padding:8px 12px; color:var(--text); font-family:"DM Mono",monospace; font-size:13px; cursor:pointer; display:flex; align-items:center; justify-content:space-between; transition:border-color 0.2s; user-select:none; }
+.time-dropdown-btn:hover, .time-dropdown-btn.open { border-color:var(--accent); }
+.time-dropdown-btn .arrow { font-size:10px; color:var(--text3); transition:transform 0.15s; }
+.time-dropdown-btn.open .arrow { transform:rotate(180deg); }
+.time-dropdown-list { position:absolute; top:calc(100% + 4px); left:0; right:0; background:var(--surface2); border:1px solid var(--border2); border-radius:8px; z-index:400; max-height:220px; overflow-y:auto; box-shadow:0 8px 24px rgba(0,0,0,0.4); }
+.time-dropdown-item { padding:9px 14px; font-family:"DM Mono",monospace; font-size:13px; color:var(--text2); cursor:pointer; transition:background 0.1s; }
+.time-dropdown-item:hover { background:var(--surface3); color:var(--text); }
+.time-dropdown-item.selected { color:var(--accent); background:rgba(200,255,87,0.07); }
+
+
+.pend-check { width:18px; height:18px; border:2px solid var(--border2); border-radius:4px; cursor:pointer; flex-shrink:0; appearance:none; -webkit-appearance:none; background:transparent; position:relative; transition:all 0.15s; }
+.pend-check:checked { background:var(--done); border-color:var(--done); }
+.pend-check:checked::after { content:'✓'; position:absolute; top:50%; left:50%; transform:translate(-50%,-50%); font-size:10px; color:#000; font-weight:700; }
+.pending-item.checked-off { opacity:0.4; }
+.pending-item.checked-off .pending-item-text { text-decoration:line-through; }
+
+
+/* LOGIN SCREEN */
+#loginScreen { position:fixed; inset:0; background:var(--bg); z-index:9999; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:24px; }
+#loginScreen .login-logo { display:flex; flex-direction:column; align-items:center; gap:12px; }
+#loginScreen .login-logo svg { width:64px; height:64px; }
+#loginScreen .login-wordmark { font-family:"Syne",sans-serif; font-weight:800; font-size:36px; letter-spacing:6px; color:var(--accent); }
+#loginScreen .login-sub { font-size:12px; color:var(--text3); letter-spacing:3px; text-transform:uppercase; }
+#loginScreen .login-desc { font-size:13px; color:var(--text2); text-align:center; line-height:1.7; max-width:260px; }
+.google-login-btn { display:flex; align-items:center; gap:12px; padding:14px 28px; background:var(--surface); border:1px solid var(--border2); border-radius:12px; cursor:pointer; transition:all 0.2s; font-family:"DM Mono",monospace; font-size:13px; color:var(--text); }
+.google-login-btn:hover { border-color:var(--accent); background:var(--surface2); }
+.google-login-btn svg { width:20px; height:20px; flex-shrink:0; }
+
+/* USER BADGE */
+.user-badge { display:flex; align-items:center; gap:8px; }
+.user-avatar { width:28px; height:28px; border-radius:50%; border:1px solid var(--border2); }
+.user-name { font-size:11px; color:var(--text3); max-width:80px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.logout-btn { font-size:10px; color:var(--text3); background:transparent; border:1px solid var(--border); border-radius:6px; padding:3px 8px; cursor:pointer; font-family:"DM Mono",monospace; transition:all 0.15s; }
+.logout-btn:hover { border-color:var(--accent3); color:var(--accent3); }
+
+/* SCROLLBAR */
+::-webkit-scrollbar { width:4px; }
+::-webkit-scrollbar-track { background:var(--bg); }
+::-webkit-scrollbar-thumb { background:var(--border2); border-radius:2px; }
+
+/* MOBILE */
+@media (max-width:768px) {
+  .daily-grid { grid-template-columns:1fr; height:auto; }
+  .panel { border-right:none; border-bottom:1px solid var(--border); }
+  .header { padding:12px 16px; }
+  .stats-grid { grid-template-columns:1fr 1fr; }
+  .cat-breakdown { grid-template-columns:repeat(3,1fr); }
+  .cal-cell { min-height:56px; padding:6px; }
+  .cal-date-num { font-size:13px; }
+  .tpl-editor { width:95vw; }
+}
+@media (max-width:480px) {
+  .stats-grid { grid-template-columns:1fr 1fr; }
+  .cat-breakdown { grid-template-columns:1fr 1fr; }
+  .nav-tab { padding:6px 8px; font-size:10px; }
+}
+</style>
+</head>
+<body>
+
+<!-- HEADER -->
+<header class="header">
+  <div class="logo">
+    <div class="logo-mark">
+      <svg viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <!-- outer ring -->
+        <circle cx="16" cy="16" r="14" stroke="#c8ff57" stroke-width="1.5" stroke-dasharray="4 2" opacity="0.3"/>
+        <!-- inner diamond -->
+        <path d="M16 4 L28 16 L16 28 L4 16 Z" stroke="#c8ff57" stroke-width="1.5" fill="none" opacity="0.6"/>
+        <!-- center cross -->
+        <line x1="16" y1="10" x2="16" y2="22" stroke="#c8ff57" stroke-width="1.5" opacity="0.9"/>
+        <line x1="10" y1="16" x2="22" y2="16" stroke="#c8ff57" stroke-width="1.5" opacity="0.9"/>
+        <!-- center dot -->
+        <circle cx="16" cy="16" r="2.5" fill="#c8ff57"/>
+        <!-- corner accents -->
+        <circle cx="16" cy="4" r="1.5" fill="#c8ff57" opacity="0.5"/>
+        <circle cx="28" cy="16" r="1.5" fill="#c8ff57" opacity="0.5"/>
+        <circle cx="16" cy="28" r="1.5" fill="#c8ff57" opacity="0.5"/>
+        <circle cx="4" cy="16" r="1.5" fill="#c8ff57" opacity="0.5"/>
+      </svg>
+    </div>
+    <div class="logo-text">
+      <div class="logo-wordmark">GRA<em>V</em>IT</div>
+      <div class="logo-sub">Planner</div>
+    </div>
+  </div>
+  <nav class="nav-tabs">
+    <button class="nav-tab active" onclick="switchPage('daily')">Daily</button>
+    <button class="nav-tab" onclick="switchPage('calendar')">Calendar</button>
+    <button class="nav-tab" onclick="switchPage('stats')">Stats</button>
+    <button class="nav-tab" onclick="switchPage('templates')">Templates</button>
+    <button class="nav-tab" onclick="switchPage('pending')">Pending</button>
+  </nav>
+  <div class="date-nav">
+    <button onclick="changeDate(-1)">‹</button>
+    <div class="date-display" id="headerDate" onclick="openDatePicker()" style="cursor:pointer;" title="날짜 직접 선택">—</div>
+    <button onclick="changeDate(1)">›</button>
+    <button class="today-btn date-picker-btn" onclick="openDatePicker()" title="날짜 선택">📅</button>
+    <button class="today-btn" onclick="goToday()">Today</button>
+    <span id="syncStatus" style="font-size:9px;letter-spacing:0;color:var(--text3);margin-left:2px;white-space:nowrap;"></span><div class="user-badge" id="userBadge" style="display:none;"><img class="user-avatar" id="userAvatar" src="" alt=""><span class="user-name" id="userName"></span><button class="logout-btn" onclick="signOut()">로그아웃</button></div>
+  </div>
+</header>
+
+<!-- DAILY PAGE -->
+<div id="page-daily" class="page active">
+  <div class="daily-grid">
+    <div class="panel" id="leftPanel">
+      <!-- KPI -->
+      <div class="kpi-bar">
+        <div class="kpi-stat"><div class="kpi-val" id="kpiDone" style="color:var(--done)">0</div><div class="kpi-label">Done</div></div>
+        <div class="kpi-divider"></div>
+        <div class="kpi-stat"><div class="kpi-val" id="kpiPending" style="color:var(--pending)">0</div><div class="kpi-label">Pending</div></div>
+        <div class="kpi-divider"></div>
+        <div class="kpi-progress-wrap">
+          <div class="kpi-progress-label"><span>Completion</span><span id="kpiRate" style="color:var(--accent)">0%</span></div>
+          <div class="kpi-progress"><div class="kpi-progress-fill" id="kpiBar" style="width:0%"></div></div>
+        </div>
+      </div>
+
+      <!-- Template bar -->
+      <div class="tpl-bar" id="tplBar">
+        <span class="tpl-bar-label">Templates</span>
+        <div id="tplQuickBtns" style="display:flex;gap:6px;flex-wrap:wrap;"></div>
+        <button class="tpl-manage-btn" onclick="switchPage('templates')">관리 →</button>
+      </div>
+
+      <!-- Big 3 -->
+      <div class="panel-title">Big 3 Priorities<button class="pend-send-btn" style="opacity:1;font-size:10px;padding:2px 8px;border-radius:4px;" onclick="openPickPendingModal('big3')">미완료에서 ↓</button></div>
+      <div id="big3Container">
+        <div class="big3-item"><input type="checkbox" class="big3-check" onchange="saveDayData();updateKPI()"><div class="big3-num">1</div><textarea class="big3-input" placeholder="Top priority..." rows="1" oninput="autoResize(this);saveDayData()" onchange="saveDayData()"></textarea></div>
+        <div class="big3-item"><input type="checkbox" class="big3-check" onchange="saveDayData();updateKPI()"><div class="big3-num">2</div><textarea class="big3-input" placeholder="Second priority..." rows="1" oninput="autoResize(this);saveDayData()" onchange="saveDayData()"></textarea></div>
+        <div class="big3-item"><input type="checkbox" class="big3-check" onchange="saveDayData();updateKPI()"><div class="big3-num">3</div><textarea class="big3-input" placeholder="Third priority..." rows="1" oninput="autoResize(this);saveDayData()" onchange="saveDayData()"></textarea></div>
+      </div>
+
+      <!-- Brain Dump -->
+      <div class="panel-title" style="margin-top:18px">Brain Dump<button class="pend-send-btn" style="opacity:1;font-size:10px;padding:2px 8px;border-radius:4px;" onclick="openPickPendingModal('brain')">미완료에서 ↓</button></div>
+      <div class="brain-dump-list" id="brainDumpList"></div>
+      <button class="add-btn" onclick="addBrainItem()">+ Add Task</button>
+
+      <!-- Reflection -->
+      <div class="reflect-section">
+        <div class="panel-title" style="margin-top:18px">Reflection</div>
+        <div class="reflect-tabs">
+          <button class="reflect-tab active" onclick="switchReflect(this,'start')">Start</button>
+          <button class="reflect-tab" onclick="switchReflect(this,'mid')">Mid</button>
+          <button class="reflect-tab" onclick="switchReflect(this,'end')">End</button>
+        </div>
+        <textarea class="reflect-area" id="reflectArea" placeholder="Write your thoughts here..." oninput="saveDayData()"></textarea>
+      </div>
+      <!-- Pending Section -->
+      <div class="pending-section">
+        <div class="pending-header" onclick="togglePendingSection()">
+          <div class="pending-header-left">
+            <div class="panel-title" style="margin-bottom:0;">Pending Items</div>
+            <span class="pending-badge" id="pendingBadge">0</span>
+          </div>
+          <span class="pending-toggle-icon" id="pendingToggleIcon">▼</span>
+        </div>
+        <div class="pending-body" id="pendingBody">
+          <div id="pendingDailyList"></div>
+        </div>
+      </div>
+    </div>
+
+
+    <!-- RIGHT: Timebox -->
+    <div class="panel" id="rightPanel">
+      <div class="panel-title">Time-Box Schedule
+        <span style="font-size:10px;color:var(--text3);font-family:'DM Mono',monospace;letter-spacing:0;text-transform:none;">클릭해서 블록 추가</span>
+      </div>
+      <div style="position:relative;">
+        <div class="time-axis" id="timeAxis"></div>
+        <div id="tbBlocks" style="position:absolute;top:0;left:0;right:0;pointer-events:none;"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- CALENDAR PAGE -->
+<div id="page-calendar" class="page">
+  <div class="calendar-wrap">
+    <div class="cal-header">
+      <button class="cal-nav-btn" onclick="changeCalMonth(-1)">‹</button>
+      <div class="cal-month-title" id="calMonthTitle">—</div>
+      <button class="cal-nav-btn" onclick="changeCalMonth(1)">›</button>
+    </div>
+    <div class="cal-grid" id="calGrid"></div>
+  </div>
+</div>
+
+<!-- STATS PAGE -->
+<div id="page-stats" class="page">
+  <div class="stats-wrap">
+    <div class="stats-toggle">
+      <button class="stats-toggle-btn active" onclick="switchStats(this,'week')">Weekly</button>
+      <button class="stats-toggle-btn" onclick="switchStats(this,'month')">Monthly</button>
+    </div>
+    <div class="stats-grid">
+      <div class="stat-card"><div class="stat-card-val" id="statAvgRate">—</div><div class="stat-card-label">Avg Completion</div></div>
+      <div class="stat-card stat-card-clickable" style="grid-column:span 2;" id="statDonePendingCard">
+        <div style="display:flex;gap:0;height:100%;">
+          <div class="stat-half" id="statDoneHalf" onclick="openStatsList('done')" title="완료 항목 보기">
+            <div class="stat-card-val" id="statTotalDone" style="color:var(--done);">—</div>
+            <div class="stat-card-label">Done ↗</div>
+          </div>
+          <div style="width:1px;background:var(--border);margin:0 16px;flex-shrink:0;"></div>
+          <div class="stat-half" id="statPendingHalf" onclick="openStatsList('pending')" title="미완료 항목 보기">
+            <div class="stat-card-val" id="statTotalPending" style="color:var(--pending);">—</div>
+            <div class="stat-card-label">Pending ↗</div>
+          </div>
+        </div>
+      </div>
+      <div class="stat-card"><div class="stat-card-val" id="statActiveDays">—</div><div class="stat-card-label">Active Days</div></div>
+      <div class="stat-card"><div class="stat-card-val" id="statTimebox">—</div><div class="stat-card-label">Time Blocks</div></div>
+    </div>
+    <div class="chart-section"><div class="chart-title">Daily Completion Rate</div><div class="bar-chart" id="completionBarChart"></div></div>
+    <div class="chart-section"><div class="chart-title">Category Breakdown</div><div class="cat-breakdown" id="catBreakdown"></div></div>
+  </div>
+</div>
+
+<!-- TEMPLATES PAGE -->
+<div id="page-templates" class="page">
+  <div class="tpl-page-wrap">
+    <div class="tpl-page-header">
+      <div class="tpl-page-title">Templates</div>
+      <button class="btn-save" onclick="openTplEditor(null)">+ 새 템플릿</button>
+    </div>
+    <div class="tpl-list-grid" id="tplListGrid"></div>
+  </div>
+</div>
+
+<!-- PENDING PAGE -->
+<div id="page-pending" class="page">
+  <div class="pending-page-wrap">
+    <div class="pending-page-title">Pending Items</div>
+    <div class="pending-filter-row">
+      <button class="pf-btn active" data-filter="all" onclick="setPendingFilter(this,'all')">전체</button>
+      <button class="pf-btn" data-filter="big3" onclick="setPendingFilter(this,'big3')">Big 3</button>
+      <button class="pf-btn" data-filter="brain" onclick="setPendingFilter(this,'brain')">Brain Dump</button>
+      <button class="pf-btn" data-filter="tb" onclick="setPendingFilter(this,'tb')">타임박스</button>
+      <button class="pf-today-toggle" id="todayToggleBtn" onclick="toggleTodayInclude()" title="오늘 항목 포함 여부">오늘제외</button>
+    </div>
+    <div id="pendingPageList"></div>
+  </div>
+</div>
+
+
+<!-- TIMEBOX MODAL -->
+<div class="modal-overlay" id="tbModalOverlay" onclick="closeTbModal(event)">
+  <div class="modal">
+    <div class="modal-title">⏱ 타임 블록 추가</div>
+    <div class="field-wrap">
+      <div class="field-label">시간대</div>
+      <div class="time-range-row">
+        <div class="time-dropdown" id="tbStartDropdown">
+          <div class="time-dropdown-btn" id="tbStartBtn" onclick="toggleTimeDropdown('tbStart')">
+            <span id="tbStartLabel">05:00</span><span class="arrow">▼</span>
+          </div>
+          <div class="time-dropdown-list" id="tbStartList" style="display:none;"></div>
+        </div>
+        <span class="time-range-sep">→</span>
+        <div class="time-dropdown" id="tbEndDropdown">
+          <div class="time-dropdown-btn" id="tbEndBtn" onclick="toggleTimeDropdown('tbEnd')">
+            <span id="tbEndLabel">06:00</span><span class="arrow">▼</span>
+          </div>
+          <div class="time-dropdown-list" id="tbEndList" style="display:none;"></div>
+        </div>
+      </div>
+    </div>
+    <div class="field-wrap">
+      <div class="field-label">카테고리</div>
+      <div class="cat-pills" id="tbCatPills">
+        <button class="cat-pill-btn cat-work" data-cat="work" onclick="selectTbCat(this)">Work</button>
+        <button class="cat-pill-btn cat-health" data-cat="health" onclick="selectTbCat(this)">Health</button>
+        <button class="cat-pill-btn cat-personal" data-cat="personal" onclick="selectTbCat(this)">Personal</button>
+        <button class="cat-pill-btn cat-learning" data-cat="learning" onclick="selectTbCat(this)">Learning</button>
+        <button class="cat-pill-btn cat-free" data-cat="free" onclick="selectTbCat(this)">Free</button>
+      </div>
+    </div>
+    <div class="field-wrap">
+      <div class="field-label">제목</div>
+      <input type="text" class="modal-input" id="tbTitle" placeholder="할 일 입력...">
+      <div class="tb-pick-tabs">
+        <button class="tb-pick-tab active" id="tbTabBrain" onclick="switchTbPickTab('brain')">Brain Dump</button>
+        <button class="tb-pick-tab" id="tbTabPending" onclick="switchTbPickTab('pending')">미완료</button>
+      </div>
+      <div id="tbBrainPickList" class="brain-pick-list" style="margin-top:0;border-radius:0 0 8px 8px;border-top:none;"></div>
+    </div>
+    <div class="field-wrap">
+      <div class="field-label">메모 (선택)</div>
+      <textarea class="modal-textarea" id="tbDetail" placeholder="세부 내용..."></textarea>
+    </div>
+    <div class="modal-actions">
+      <button class="btn-danger" id="tbDeleteBtn" onclick="deleteTbBlock()" style="display:none">삭제</button>
+      <button class="btn-cancel" onclick="closeTbModal()">취소</button>
+      <button class="btn-save" onclick="saveTbBlock()">저장</button>
+    </div>
+  </div>
+</div>
+
+<!-- TEMPLATE EDITOR MODAL -->
+<div class="modal-overlay" id="tplEditorOverlay" onclick="closeTplEditor(event)">
+  <div class="tpl-editor">
+    <div class="modal-title" id="tplEditorTitle">템플릿 만들기</div>
+    <div class="field-wrap">
+      <div class="field-label">템플릿 이름</div>
+      <input type="text" class="modal-input" id="tplEditorName" placeholder="예: 결산업무 루틴">
+    </div>
+    <div class="tpl-editor-section">
+      <div class="tpl-editor-section-title">Big 3</div>
+      <div id="tplEditorBig3">
+        <div class="tpl-big3-row"><div class="tpl-big3-num">1</div><input type="text" class="tpl-big3-input" placeholder="Priority 1..."><button class="tpl-row-del" onclick="clearTplBig3(this)">×</button></div>
+        <div class="tpl-big3-row"><div class="tpl-big3-num">2</div><input type="text" class="tpl-big3-input" placeholder="Priority 2..."><button class="tpl-row-del" onclick="clearTplBig3(this)">×</button></div>
+        <div class="tpl-big3-row"><div class="tpl-big3-num">3</div><input type="text" class="tpl-big3-input" placeholder="Priority 3..."><button class="tpl-row-del" onclick="clearTplBig3(this)">×</button></div>
+      </div>
+    </div>
+    <div class="tpl-editor-section">
+      <div class="tpl-editor-section-title">Brain Dump Tasks</div>
+      <div id="tplEditorBrain"></div>
+      <button class="tpl-add-row-btn" onclick="addTplBrainRow()">+ 항목 추가</button>
+    </div>
+    <div class="tpl-editor-section">
+      <div class="tpl-editor-section-title">타임박스 (선택)</div>
+      <div id="tplEditorTb"></div>
+      <button class="tpl-add-row-btn" onclick="openTplTbModal()">+ 타임 블록 추가</button>
+    </div>
+    <div class="modal-actions">
+      <button class="btn-cancel" onclick="closeTplEditor()">취소</button>
+      <button class="btn-save" onclick="saveTplEditor()">저장</button>
+    </div>
+  </div>
+</div>
+
+<!-- TEMPLATE TIMEBOX SUB-MODAL -->
+<div class="modal-overlay" id="tplTbModalOverlay" onclick="closeTplTbModal(event)" style="z-index:300;">
+  <div class="modal" style="z-index:301;">
+    <div class="modal-title">타임 블록 추가</div>
+    <div class="field-wrap">
+      <div class="field-label">시간대</div>
+      <div class="time-range-row">
+        <div class="time-dropdown" id="tplTbStartDropdown">
+          <div class="time-dropdown-btn" id="tplTbStartBtn" onclick="toggleTimeDropdown('tplTbStart')">
+            <span id="tplTbStartLabel">09:00</span><span class="arrow">▼</span>
+          </div>
+          <div class="time-dropdown-list" id="tplTbStartList" style="display:none;"></div>
+        </div>
+        <span class="time-range-sep">→</span>
+        <div class="time-dropdown" id="tplTbEndDropdown">
+          <div class="time-dropdown-btn" id="tplTbEndBtn" onclick="toggleTimeDropdown('tplTbEnd')">
+            <span id="tplTbEndLabel">10:00</span><span class="arrow">▼</span>
+          </div>
+          <div class="time-dropdown-list" id="tplTbEndList" style="display:none;"></div>
+        </div>
+      </div>
+    </div>
+    <div class="field-wrap">
+      <div class="field-label">카테고리</div>
+      <div class="cat-pills" id="tplTbCatPills">
+        <button class="cat-pill-btn cat-work" data-cat="work" onclick="selectTplTbCat(this)">Work</button>
+        <button class="cat-pill-btn cat-health" data-cat="health" onclick="selectTplTbCat(this)">Health</button>
+        <button class="cat-pill-btn cat-personal" data-cat="personal" onclick="selectTplTbCat(this)">Personal</button>
+        <button class="cat-pill-btn cat-learning" data-cat="learning" onclick="selectTplTbCat(this)">Learning</button>
+        <button class="cat-pill-btn cat-free" data-cat="free" onclick="selectTplTbCat(this)">Free</button>
+      </div>
+    </div>
+    <div class="field-wrap">
+      <div class="field-label">제목</div>
+      <input type="text" class="modal-input" id="tplTbTitleInput" placeholder="할 일 입력...">
+    </div>
+    <div class="modal-actions">
+      <button class="btn-cancel" onclick="closeTplTbModal()">취소</button>
+      <button class="btn-save" onclick="confirmTplTbBlock()">추가</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ========================
+// STATE
+// ========================
+let currentDate = new Date();
+let currentDateKey = dateKey(currentDate);
+let currentReflectType = 'start';
+let currentCalMonth = new Date();
+let currentStatsMode = 'week';
+let editingTbBlockId = null;
+let editingTplIdx = null;
+let tplEditorTbList = [];
+
+const TIMES = [];
+for (let h = 5; h <= 23; h++) {
+  TIMES.push(`${String(h).padStart(2,'0')}:00`);
+  if (h < 23) TIMES.push(`${String(h).padStart(2,'0')}:30`);
+}
+const SLOT_H = 41; // px per 30min slot
+
+const CATEGORIES = {
+  work:     { label:'Work',     cls:'cat-work',     dot:'dot-work'    },
+  health:   { label:'Health',   cls:'cat-health',   dot:'dot-health'  },
+  personal: { label:'Personal', cls:'cat-personal', dot:'dot-personal'},
+  learning: { label:'Learning', cls:'cat-learning', dot:'dot-learning'},
+  free:     { label:'Free',     cls:'cat-free',     dot:'dot-free'    },
+};
+
+// ========================
+// FIREBASE STORAGE
+// ========================
+function dateKey(d) {
+  return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+}
+
+let _cache = {};
+let _cacheLoaded = false;
+
+const DEFAULT_DAY = () => ({
+  big3: [{text:'',done:false},{text:'',done:false},{text:'',done:false}],
+  brain: [], timebox: [], reflect: {start:'',mid:'',end:''}
+});
+
+async function loadAllFromFirebase() {
+  if (_cacheLoaded) return _cache;
+  try {
+    showSyncStatus('loading');
+    if (window.loadAllFromFirebaseReal) {
+      const data = await window.loadAllFromFirebaseReal();
+      Object.assign(_cache, data);
+    } else {
+      try { Object.assign(_cache, JSON.parse(localStorage.getItem('gravit_data') || '{}')); } catch {}
+    }
+    _cacheLoaded = true;
+    showSyncStatus('ok');
+  } catch(e) {
+    try { Object.assign(_cache, JSON.parse(localStorage.getItem('gravit_data') || '{}')); } catch {}
+    _cacheLoaded = true;
+    showSyncStatus('offline');
+  }
+  return _cache;
+}
+
+async function saveToFirebase(key, data) {
+  _cache[key] = data;
+  try { localStorage.setItem('gravit_data', JSON.stringify(_cache)); } catch {}
+  try {
+    showSyncStatus('saving');
+    if (window.saveToFirebaseReal) await window.saveToFirebaseReal(key, data);
+    showSyncStatus('ok');
+  } catch(e) { showSyncStatus('offline'); }
+}
+
+function getDay(key) {
+  const d = _cache[key] || DEFAULT_DAY();
+  if (!Array.isArray(d.timebox)) d.timebox = [];
+  return d;
+}
+
+function setDay(key, data) { saveToFirebase(key, data); }
+function loadAll() { return _cache; }
+
+function showSyncStatus(s) {
+  const el = document.getElementById('syncStatus');
+  if (!el) return;
+  const icons = { loading:'⟳ 로딩', saving:'⟳ 저장', ok:'✓ 동기화', offline:'⚡ 오프라인' };
+  const colors = { loading:'var(--text3)', saving:'var(--accent2)', ok:'var(--done)', offline:'var(--pending)' };
+  el.textContent = icons[s] || ''; el.style.color = colors[s] || 'var(--text3)';
+}
+
+// ========================
+// NAVIGATION
+// ========================
+function switchPage(name) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
+  document.getElementById('page-' + name).classList.add('active');
+  document.querySelectorAll('.nav-tab').forEach(t => {
+    if (t.textContent.toLowerCase() === name || (name==='templates' && t.textContent==='Templates') || (name==='pending' && t.textContent==='Pending')) t.classList.add('active');
+  });
+  if (name === 'calendar') renderCalendar();
+  if (name === 'stats') renderStats();
+  if (name === 'templates') renderTplPage();
+  if (name === 'pending') renderPendingPage();
+}
+
+
+function openDatePicker() {
+  const overlay = document.getElementById('datepickerOverlay');
+  const input = document.getElementById('datepickerInput');
+  input.value = currentDateKey;
+  overlay.classList.add('open');
+  setTimeout(() => input.focus(), 100);
+}
+
+function pickDate(val) {
+  if (!val) return;
+  const parts = val.split('-');
+  currentDate = new Date(parseInt(parts[0]), parseInt(parts[1])-1, parseInt(parts[2]));
+  currentDateKey = val;
+  updateHeader();
+  loadDayData();
+  document.getElementById('datepickerOverlay').classList.remove('open');
+}
+
+function closeDatePicker(e) {
+  if (e && e.target !== document.getElementById('datepickerOverlay')) return;
+  document.getElementById('datepickerOverlay').classList.remove('open');
+}
+
+function changeDate(delta) {
+  currentDate.setDate(currentDate.getDate() + delta);
+  currentDateKey = dateKey(currentDate);
+  updateHeader(); loadDayData();
+}
+
+function goToday() {
+  currentDate = new Date(); currentDateKey = dateKey(currentDate);
+  updateHeader(); loadDayData();
+}
+
+function updateHeader() {
+  const today = dateKey(new Date());
+  const isToday = currentDateKey === today;
+  const days = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+  const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  const label = `${days[currentDate.getDay()]}, ${months[currentDate.getMonth()]} ${currentDate.getDate()}`;
+  document.getElementById('headerDate').innerHTML = label + (isToday ? '<span class="today-badge">Today</span>' : '');
+}
+
+function switchReflect(btn, type) {
+  currentReflectType = type;
+  document.querySelectorAll('.reflect-tab').forEach(t => t.classList.remove('active'));
+  btn.classList.add('active');
+  document.getElementById('reflectArea').value = getDay(currentDateKey).reflect[type] || '';
+}
+
+// ========================
+// LOAD / SAVE DAY
+// ========================
+function loadDayData() {
+  const day = getDay(currentDateKey);
+  // Big 3
+  document.querySelectorAll('#big3Container .big3-item').forEach((item, i) => {
+    const d = day.big3[i] || {text:'',done:false};
+    item.querySelector('textarea').value = d.text;
+    item.querySelector('.big3-check').checked = d.done;
+    autoResize(item.querySelector('textarea'));
+  });
+  renderBrainDump(day.brain);
+  document.getElementById('reflectArea').value = day.reflect[currentReflectType] || '';
+  renderTimeAxis();
+  renderTbBlocks();
+  updateKPI();
+  renderTplQuickBtns();
+  renderPendingDaily();
+}
+
+function saveDayData() {
+  const day = getDay(currentDateKey);
+  day.big3 = Array.from(document.querySelectorAll('#big3Container .big3-item')).map(item => ({
+    text: item.querySelector('textarea').value,
+    done: item.querySelector('.big3-check').checked
+  }));
+  day.brain = Array.from(document.querySelectorAll('.brain-item')).map(item => ({
+    text: item.querySelector('.brain-text').value,
+    done: item.querySelector('.brain-check').checked
+  }));
+  day.reflect[currentReflectType] = document.getElementById('reflectArea').value;
+  setDay(currentDateKey, day);
+  updateKPI();
+}
+
+// ========================
+// KPI
+// ========================
+function calcKPI(key) {
+  const day = getDay(key);
+  let total = 0, done = 0;
+  day.big3.forEach(t => { if (t.text) { total++; if (t.done) done++; } });
+  day.brain.forEach(t => { if (t.text) { total++; if (t.done) done++; } });
+  const rate = total > 0 ? Math.round((done/total)*100) : 0;
+  return { total, done, pending: total-done, rate };
+}
+
+function updateKPI() {
+  const { done, pending, rate } = calcKPI(currentDateKey);
+  document.getElementById('kpiDone').textContent = done;
+  document.getElementById('kpiPending').textContent = pending;
+  document.getElementById('kpiRate').textContent = rate + '%';
+  document.getElementById('kpiBar').style.width = rate + '%';
+}
+
+// ========================
+// BRAIN DUMP
+// ========================
+function renderBrainDump(items) {
+  const c = document.getElementById('brainDumpList');
+  c.innerHTML = '';
+  (items || []).forEach(item => c.appendChild(createBrainEl(item.text, item.done)));
+}
+
+function createBrainEl(text='', done=false) {
+  const div = document.createElement('div');
+  div.className = 'brain-item' + (done ? ' done' : '');
+  div.innerHTML = `
+    <input type="checkbox" class="brain-check" ${done?'checked':''} onchange="toggleBrain(this)">
+    <input type="text" class="brain-text" value="${escH(text)}" placeholder="Task..." oninput="saveDayData()" onchange="saveDayData()">
+    <button class="brain-delete" onclick="deleteBrain(this)">×</button>`;
+  return div;
+}
+
+function addBrainItem() {
+  const c = document.getElementById('brainDumpList');
+  c.appendChild(createBrainEl());
+  c.lastChild.querySelector('.brain-text').focus();
+  saveDayData();
+}
+
+function toggleBrain(cb) {
+  cb.closest('.brain-item').classList.toggle('done', cb.checked);
+  saveDayData(); updateKPI();
+}
+
+function deleteBrain(btn) { btn.closest('.brain-item').remove(); saveDayData(); }
+
+// ========================
+// TIMEBOX
+// ========================
+function timeToIndex(t) { return TIMES.indexOf(t); }
+function indexToTime(i) { return TIMES[i]; }
+
+function renderTimeAxis() {
+  const axis = document.getElementById('timeAxis');
+  axis.innerHTML = '';
+  TIMES.forEach((t, i) => {
+    const row = document.createElement('div');
+    const isHalf = t.endsWith(':30');
+    row.className = 'time-row' + (isHalf ? ' half-hour' : '');
+    row.dataset.time = t;
+    row.onclick = () => openTbModal(t);
+    row.innerHTML = `<div class="time-label ${isHalf?'half':''}">${isHalf?'':t}</div><div class="slot-content"><span class="slot-empty-hint">+ 블록 추가</span></div>`;
+    axis.appendChild(row);
+  });
+}
+
+function renderTbBlocks() {
+  const container = document.getElementById('tbBlocks');
+  container.innerHTML = '';
+  const day = getDay(currentDateKey);
+  (day.timebox || []).forEach(block => {
+    const startIdx = timeToIndex(block.start);
+    const endIdx = timeToIndex(block.end);
+    if (startIdx < 0 || endIdx <= startIdx) return;
+    const cat = CATEGORIES[block.cat] || CATEGORIES.work;
+    const topPx = startIdx * SLOT_H + 2;
+    const heightPx = (endIdx - startIdx) * SLOT_H - 4;
+    const el = document.createElement('div');
+    el.className = `tb-block ${cat.cls}`;
+    el.style.cssText = `top:${topPx}px;height:${heightPx}px;pointer-events:all;`;
+    el.innerHTML = `
+      <div class="tb-block-cat">${cat.label}</div>
+      <div class="tb-block-title">${escH(block.title)}</div>
+      ${block.detail ? `<div class="tb-block-detail">${escH(block.detail)}</div>` : ''}
+      <div class="tb-block-time">${block.start} – ${block.end}</div>`;
+    el.onclick = (e) => { e.stopPropagation(); editTbBlock(block.id); };
+    container.appendChild(el);
+  });
+}
+
+// ========================
+// TIMEBOX MODAL
+// ========================
+// Custom dropdown state
+const _dropdownVals = {};
+
+function populateTimeSels(startId, endId, defStart, defEnd) {
+  // Map old IDs to new dropdown IDs
+  const startDd = startId === 'tbStartTime' ? 'tbStart' : startId === 'tplTbStart' ? 'tplTbStart' : startId;
+  const endDd = endId === 'tbEndTime' ? 'tbEnd' : endId === 'tplTbEnd' ? 'tplTbEnd' : endId;
+
+  const defEndVal = defEnd || TIMES[Math.min(TIMES.indexOf(defStart || TIMES[0]) + 2, TIMES.length - 1)];
+
+  buildDropdown(startDd, defStart || TIMES[0]);
+  buildDropdown(endDd, defEndVal);
+}
+
+function buildDropdown(id, selected) {
+  _dropdownVals[id] = selected;
+  const list = document.getElementById(id + 'List');
+  const label = document.getElementById(id + 'Label');
+  if (!list || !label) return;
+  label.textContent = selected;
+  list.innerHTML = '';
+  TIMES.forEach(t => {
+    const item = document.createElement('div');
+    item.className = 'time-dropdown-item' + (t === selected ? ' selected' : '');
+    item.textContent = t;
+    item.onclick = (e) => {
+      e.stopPropagation();
+      setDropdownVal(id, t);
+      closeAllDropdowns();
+    };
+    list.appendChild(item);
+  });
+  // Scroll to selected
+  setTimeout(() => {
+    const sel = list.querySelector('.selected');
+    if (sel) sel.scrollIntoView({ block: 'center' });
+  }, 50);
+}
+
+function setDropdownVal(id, val) {
+  _dropdownVals[id] = val;
+  const label = document.getElementById(id + 'Label');
+  const list = document.getElementById(id + 'List');
+  if (label) label.textContent = val;
+  if (list) list.querySelectorAll('.time-dropdown-item').forEach(item => {
+    item.classList.toggle('selected', item.textContent === val);
+  });
+}
+
+function getDropdownVal(id) {
+  return _dropdownVals[id] || TIMES[0];
+}
+
+function toggleTimeDropdown(id) {
+  const list = document.getElementById(id + 'List');
+  const btn = document.getElementById(id + 'Btn');
+  if (!list) return;
+  const isOpen = list.style.display !== 'none';
+  closeAllDropdowns();
+  if (!isOpen) {
+    list.style.display = 'block';
+    btn.classList.add('open');
+    const sel = list.querySelector('.selected');
+    if (sel) setTimeout(() => sel.scrollIntoView({ block: 'center' }), 30);
+  }
+}
+
+function closeAllDropdowns() {
+  document.querySelectorAll('.time-dropdown-list').forEach(l => l.style.display = 'none');
+  document.querySelectorAll('.time-dropdown-btn').forEach(b => b.classList.remove('open'));
+}
+
+// Close dropdowns when clicking outside
+document.addEventListener('click', e => {
+  if (!e.target.closest('.time-dropdown')) closeAllDropdowns();
+});
+
+function openTbModal(clickedTime) {
+  editingTbBlockId = null;
+  populateTimeSels('tbStartTime', 'tbEndTime', clickedTime);
+  document.getElementById('tbTitle').value = '';
+  document.getElementById('tbDetail').value = '';
+  document.getElementById('tbDeleteBtn').style.display = 'none';
+  document.querySelectorAll('#tbCatPills .cat-pill-btn').forEach(b => b.classList.remove('selected'));
+  document.querySelector('#tbCatPills .cat-pill-btn[data-cat="work"]').classList.add('selected');
+  renderBrainPickList();
+  document.getElementById('tbModalOverlay').classList.add('open');
+  setTimeout(() => document.getElementById('tbTitle').focus(), 100);
+}
+
+function editTbBlock(id) {
+  const day = getDay(currentDateKey);
+  const block = (day.timebox || []).find(b => b.id === id);
+  if (!block) return;
+  editingTbBlockId = id;
+  populateTimeSels('tbStartTime', 'tbEndTime', block.start, block.end);
+  document.getElementById('tbTitle').value = block.title;
+  document.getElementById('tbDetail').value = block.detail || '';
+  document.getElementById('tbDeleteBtn').style.display = 'block';
+  document.querySelectorAll('#tbCatPills .cat-pill-btn').forEach(b => b.classList.remove('selected'));
+  const catBtn = document.querySelector(`#tbCatPills .cat-pill-btn[data-cat="${block.cat}"]`);
+  if (catBtn) catBtn.classList.add('selected');
+  renderBrainPickList(block.title);
+  document.getElementById('tbModalOverlay').classList.add('open');
+}
+
+let _tbPickTab = 'brain';
+
+function switchTbPickTab(tab) {
+  _tbPickTab = tab;
+  document.getElementById('tbTabBrain').classList.toggle('active', tab === 'brain');
+  document.getElementById('tbTabPending').classList.toggle('active', tab === 'pending');
+  if (tab === 'brain') renderBrainPickList();
+  else injectPendingToTbModal();
+}
+
+function renderBrainPickList(currentTitle) {
+  const day = getDay(currentDateKey);
+  const list = document.getElementById('tbBrainPickList');
+  const tasks = (day.brain || []).filter(b => b.text);
+  if (tasks.length === 0) {
+    list.innerHTML = '<div class="brain-pick-empty">Brain Dump에 항목이 없어요</div>';
+    return;
+  }
+  list.innerHTML = tasks.map(t => `
+    <div class="brain-pick-item ${t.text === currentTitle ? 'picked' : ''}" onclick="pickBrainTask('${escH(t.text).replace(/'/g,"\\'")}')">
+      <span style="font-size:10px;color:var(--text3);">→</span> ${escH(t.text)}
+    </div>`).join('');
+}
+
+
+// pickBrainTask kept for legacy
+function pickBrainTask(text) {
+  document.getElementById('tbTitle').value = text;
+}
+
+function selectTbCat(btn) {
+  document.querySelectorAll('#tbCatPills .cat-pill-btn').forEach(b => b.classList.remove('selected'));
+  btn.classList.add('selected');
+}
+
+function saveTbBlock() {
+  const start = getDropdownVal('tbStart');
+  const end = getDropdownVal('tbEnd');
+  const title = document.getElementById('tbTitle').value.trim();
+  const detail = document.getElementById('tbDetail').value.trim();
+  const cat = document.querySelector('#tbCatPills .cat-pill-btn.selected')?.dataset.cat || 'work';
+  if (!title) { document.getElementById('tbTitle').focus(); return; }
+  if (timeToIndex(end) <= timeToIndex(start)) { alert('끝 시간이 시작 시간보다 늦어야 해요!'); return; }
+
+  const day = getDay(currentDateKey);
+  if (!Array.isArray(day.timebox)) day.timebox = [];
+
+  if (editingTbBlockId) {
+    const idx = day.timebox.findIndex(b => b.id === editingTbBlockId);
+    if (idx >= 0) day.timebox[idx] = { ...day.timebox[idx], start, end, cat, title, detail };
+  } else {
+    day.timebox.push({ id: genId(), start, end, cat, title, detail });
+  }
+
+  setDay(currentDateKey, day);
+  closeTbModal();
+  renderTbBlocks();
+}
+
+function deleteTbBlock() {
+  const day = getDay(currentDateKey);
+  day.timebox = (day.timebox || []).filter(b => b.id !== editingTbBlockId);
+  setDay(currentDateKey, day);
+  closeTbModal(); renderTbBlocks();
+}
+
+function closeTbModal(e) {
+  if (e && e.target !== document.getElementById('tbModalOverlay')) return;
+  document.getElementById('tbModalOverlay').classList.remove('open');
+  closeAllDropdowns();
+}
+
+// ========================
+// TEMPLATES
+// ========================
+function loadTemplates() {
+  try { return JSON.parse(localStorage.getItem('gravit_templates') || '[]'); } catch { return []; }
+}
+
+function saveTemplatesLocal(tpls) {
+  localStorage.setItem('gravit_templates', JSON.stringify(tpls));
+}
+
+function renderTplQuickBtns() {
+  const tpls = loadTemplates();
+  const c = document.getElementById('tplQuickBtns');
+  c.innerHTML = '';
+  tpls.forEach((tpl, i) => {
+    const btn = document.createElement('button');
+    btn.className = 'tpl-quick-btn';
+    btn.textContent = '⚡ ' + tpl.name;
+    btn.onclick = () => applyTemplate(i);
+    c.appendChild(btn);
+  });
+}
+
+function applyTemplate(idx) {
+  const tpls = loadTemplates();
+  const tpl = tpls[idx]; if (!tpl) return;
+  const day = getDay(currentDateKey);
+
+  // Big 3: fill empty slots
+  let ti = 0;
+  for (let i = 0; i < 3 && ti < (tpl.big3||[]).length; i++) {
+    if (!day.big3[i].text) { day.big3[i] = { text: tpl.big3[ti].text, done: false }; ti++; }
+  }
+  while (ti < (tpl.big3||[]).length) { day.brain.push({ text: tpl.big3[ti].text, done: false }); ti++; }
+
+  // Brain: append
+  (tpl.brain || []).forEach(b => { if (b.text) day.brain.push({ text: b.text, done: false }); });
+
+  // Timebox: append (avoid overlap)
+  (tpl.timebox || []).forEach(tb => {
+    const conflict = (day.timebox||[]).some(ex => !(timeToIndex(tb.end)<=timeToIndex(ex.start)||timeToIndex(tb.start)>=timeToIndex(ex.end)));
+    if (!conflict) { if (!Array.isArray(day.timebox)) day.timebox=[]; day.timebox.push({ ...tb, id: genId() }); }
+  });
+
+  setDay(currentDateKey, day);
+  loadDayData();
+}
+
+function renderTplPage() {
+  const tpls = loadTemplates();
+  const grid = document.getElementById('tplListGrid');
+  if (tpls.length === 0) {
+    grid.innerHTML = `<div class="tpl-empty-state"><div>📋</div><div>저장된 템플릿이 없어요.<br>반복 업무를 템플릿으로 만들어두면<br>매일 빠르게 불러올 수 있어요.</div></div>`;
+    return;
+  }
+  grid.innerHTML = '';
+  tpls.forEach((tpl, i) => {
+    const big3Preview = (tpl.big3||[]).filter(b=>b.text).map(b=>escH(b.text)).join(' · ');
+    const brainPreview = (tpl.brain||[]).filter(b=>b.text).map(b=>escH(b.text)).join(' · ');
+    const tbPreview = (tpl.timebox||[]).map(b=>`${b.start} ${escH(b.title)}`).join(' · ');
+    const card = document.createElement('div');
+    card.className = 'tpl-card';
+    card.innerHTML = `
+      <div class="tpl-card-info">
+        <div class="tpl-card-name">${escH(tpl.name)}</div>
+        <div class="tpl-card-preview">
+          ${big3Preview ? `<div>Big3: ${big3Preview}</div>` : ''}
+          ${brainPreview ? `<div>Tasks: ${brainPreview}</div>` : ''}
+          ${tbPreview ? `<div>Time: ${tbPreview}</div>` : ''}
+        </div>
+      </div>
+      <div class="tpl-card-actions">
+        <button class="tpl-card-btn tpl-apply-card-btn" onclick="applyTemplate(${i});switchPage('daily')">적용</button>
+        <button class="tpl-card-btn tpl-edit-card-btn" onclick="openTplEditor(${i})">수정</button>
+        <button class="tpl-card-btn tpl-del-card-btn" id="tpl-del-${i}" onclick="confirmDeleteTpl(${i})">삭제</button>
+      </div>`;
+    grid.appendChild(card);
+  });
+}
+
+function deleteTpl(idx) {
+  const tpls = loadTemplates();
+  tpls.splice(idx, 1);
+  saveTemplatesLocal(tpls);
+  renderTplPage(); renderTplQuickBtns();
+}
+
+function confirmDeleteTpl(idx) {
+  const btn = document.getElementById('tpl-del-' + idx);
+  if (!btn) return;
+  if (btn.dataset.confirming === '1') {
+    deleteTpl(idx);
+    return;
+  }
+  btn.dataset.confirming = '1';
+  btn.textContent = '확인?';
+  btn.style.borderColor = 'var(--accent3)';
+  btn.style.color = 'var(--accent3)';
+  setTimeout(() => {
+    if (btn && btn.dataset.confirming === '1') {
+      btn.dataset.confirming = '0';
+      btn.textContent = '삭제';
+      btn.style.borderColor = '';
+      btn.style.color = '';
+    }
+  }, 2500);
+}
+
+// ========================
+// TEMPLATE EDITOR
+// ========================
+function openTplEditor(idx) {
+  editingTplIdx = idx;
+  tplEditorTbList = [];
+  document.getElementById('tplEditorTitle').textContent = idx === null ? '새 템플릿 만들기' : '템플릿 수정';
+
+  // Reset Big3
+  document.querySelectorAll('#tplEditorBig3 .tpl-big3-input').forEach(i => i.value = '');
+  document.getElementById('tplEditorBrain').innerHTML = '';
+  document.getElementById('tplEditorTb').innerHTML = '';
+  document.getElementById('tplEditorName').value = '';
+
+  if (idx !== null) {
+    const tpl = loadTemplates()[idx];
+    if (tpl) {
+      document.getElementById('tplEditorName').value = tpl.name;
+      const big3inputs = document.querySelectorAll('#tplEditorBig3 .tpl-big3-input');
+      (tpl.big3||[]).forEach((b,i) => { if (big3inputs[i]) big3inputs[i].value = b.text; });
+      (tpl.brain||[]).forEach(b => addTplBrainRow(b.text));
+      tplEditorTbList = (tpl.timebox||[]).map(b => ({...b}));
+      renderTplEditorTb();
+    }
+  }
+
+  document.getElementById('tplEditorOverlay').classList.add('open');
+  setTimeout(() => document.getElementById('tplEditorName').focus(), 100);
+}
+
+function closeTplEditor(e) {
+  if (e && e.target !== document.getElementById('tplEditorOverlay')) return;
+  document.getElementById('tplEditorOverlay').classList.remove('open');
+}
+
+function addTplBrainRow(text='') {
+  const c = document.getElementById('tplEditorBrain');
+  const div = document.createElement('div');
+  div.className = 'tpl-brain-row';
+  div.innerHTML = `<input type="text" class="tpl-brain-input" value="${escH(text)}" placeholder="할 일 항목..."><button class="tpl-row-del" onclick="this.closest('.tpl-brain-row').remove()">×</button>`;
+  c.appendChild(div);
+  div.querySelector('input').focus();
+}
+
+function clearTplBig3(btn) {
+  btn.closest('.tpl-big3-row').querySelector('input').value = '';
+}
+
+function renderTplEditorTb() {
+  const c = document.getElementById('tplEditorTb');
+  c.innerHTML = '';
+  tplEditorTbList.forEach((tb, i) => {
+    const cat = CATEGORIES[tb.cat] || CATEGORIES.work;
+    const div = document.createElement('div');
+    div.className = 'tpl-tb-row';
+    div.innerHTML = `
+      <span class="tpl-tb-time">${tb.start}–${tb.end}</span>
+      <span class="tpl-tb-cat-dot ${cat.dot}"></span>
+      <span class="tpl-tb-title">${escH(tb.title)}</span>
+      <button class="tpl-tb-del" onclick="removeTplTb(${i})">×</button>`;
+    c.appendChild(div);
+  });
+}
+
+function removeTplTb(i) {
+  tplEditorTbList.splice(i, 1);
+  renderTplEditorTb();
+}
+
+function saveTplEditor() {
+  const name = document.getElementById('tplEditorName').value.trim();
+  if (!name) { document.getElementById('tplEditorName').focus(); return; }
+
+  const big3 = Array.from(document.querySelectorAll('#tplEditorBig3 .tpl-big3-input'))
+    .map(i => ({ text: i.value.trim(), done: false })).filter(b => b.text);
+  const brain = Array.from(document.querySelectorAll('#tplEditorBrain .tpl-brain-input'))
+    .map(i => ({ text: i.value.trim(), done: false })).filter(b => b.text);
+
+  const tpl = { name, big3, brain, timebox: tplEditorTbList };
+  const tpls = loadTemplates();
+  if (editingTplIdx !== null) tpls[editingTplIdx] = tpl;
+  else tpls.push(tpl);
+  saveTemplatesLocal(tpls);
+
+  closeTplEditor();
+  renderTplPage();
+  renderTplQuickBtns();
+}
+
+// ========================
+// TEMPLATE TIMEBOX SUB-MODAL
+// ========================
+function openTplTbModal() {
+  populateTimeSels('tplTbStart', 'tplTbEnd', '09:00');
+  document.getElementById('tplTbTitleInput').value = '';
+  document.querySelectorAll('#tplTbCatPills .cat-pill-btn').forEach(b => b.classList.remove('selected'));
+  document.querySelector('#tplTbCatPills .cat-pill-btn[data-cat="work"]').classList.add('selected');
+  document.getElementById('tplTbModalOverlay').classList.add('open');
+}
+
+function closeTplTbModal(e) {
+  if (e && e.target !== document.getElementById('tplTbModalOverlay')) return;
+  document.getElementById('tplTbModalOverlay').classList.remove('open');
+}
+
+function selectTplTbCat(btn) {
+  document.querySelectorAll('#tplTbCatPills .cat-pill-btn').forEach(b => b.classList.remove('selected'));
+  btn.classList.add('selected');
+}
+
+function confirmTplTbBlock() {
+  const start = getDropdownVal('tplTbStart');
+  const end = getDropdownVal('tplTbEnd');
+  const title = document.getElementById('tplTbTitleInput').value.trim();
+  const cat = document.querySelector('#tplTbCatPills .cat-pill-btn.selected')?.dataset.cat || 'work';
+  if (!title) { document.getElementById('tplTbTitleInput').focus(); return; }
+  if (timeToIndex(end) <= timeToIndex(start)) { alert('끝 시간이 시작 시간보다 늦어야 해요!'); return; }
+  tplEditorTbList.push({ id: genId(), start, end, cat, title, detail:'' });
+  renderTplEditorTb();
+  closeTplTbModal();
+}
+
+// ========================
+// CALENDAR
+// ========================
+function changeCalMonth(delta) {
+  currentCalMonth.setMonth(currentCalMonth.getMonth() + delta);
+  renderCalendar();
+}
+
+function renderCalendar() {
+  const months = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+  document.getElementById('calMonthTitle').textContent = `${months[currentCalMonth.getMonth()]} ${currentCalMonth.getFullYear()}`;
+  const grid = document.getElementById('calGrid');
+  grid.innerHTML = '';
+  ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'].forEach(d => {
+    const el = document.createElement('div'); el.className='cal-day-header'; el.textContent=d; grid.appendChild(el);
+  });
+  const first = new Date(currentCalMonth.getFullYear(), currentCalMonth.getMonth(), 1);
+  const last = new Date(currentCalMonth.getFullYear(), currentCalMonth.getMonth()+1, 0);
+  const today = dateKey(new Date());
+  for (let i=0; i<first.getDay(); i++) { const el=document.createElement('div'); el.className='cal-cell empty'; grid.appendChild(el); }
+  for (let d=1; d<=last.getDate(); d++) {
+    const dt = new Date(currentCalMonth.getFullYear(), currentCalMonth.getMonth(), d);
+    const key = dateKey(dt);
+    const { done, pending, rate } = calcKPI(key);
+    const hasTasks = done+pending > 0;
+    const el = document.createElement('div');
+    el.className = 'cal-cell' + (key===today?' today':'') + (key===currentDateKey?' selected':'') + (hasTasks&&pending>0?' has-pending':'');
+    el.innerHTML = `<div class="cal-date-num">${d}</div>${hasTasks?`<div class="cal-kpi-text"><span class="cal-kpi-done">✓${done}</span>${pending>0?`<span class="cal-kpi-pending"> ·${pending}</span>`:''}<div>${rate}%</div></div>`:''}`;
+    el.onclick = () => { currentDate=new Date(dt); currentDateKey=key; updateHeader(); loadDayData(); switchPage('daily'); };
+    grid.appendChild(el);
+  }
+}
+
+// ========================
+// STATS
+// ========================
+function switchStats(btn, mode) {
+  currentStatsMode = mode;
+  document.querySelectorAll('.stats-toggle-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  renderStats();
+}
+
+// Store for clickable lists
+let _statsDoneItems = [];
+let _statsPendingItems = [];
+
+function renderStats() {
+  const today = new Date();
+  const days = [];
+  const count = currentStatsMode === 'week' ? 7 : 30;
+  for (let i=count-1; i>=0; i--) { const d=new Date(today); d.setDate(d.getDate()-i); days.push(d); }
+
+  const all = loadAll();
+  let totalDone=0, totalPending=0, activeDays=0, totalTb=0, rates=[];
+  const catCounts = {};
+  const todayKey = dateKey(today);
+  _statsDoneItems = [];
+  _statsPendingItems = [];
+
+  days.forEach(d => {
+    const key = dateKey(d);
+    const day = getDay(key);
+    const { done, pending, rate } = calcKPI(key);
+    rates.push({ date:d, rate, key });
+    if (done+pending>0) { totalDone+=done; totalPending+=pending; activeDays++; }
+    const dd = all[key];
+    if (dd?.timebox) { totalTb += dd.timebox.length; dd.timebox.forEach(b => { catCounts[b.cat]=(catCounts[b.cat]||0)+1; }); }
+
+    // Collect done items
+    day.big3.forEach(t => { if (t.text && t.done) _statsDoneItems.push({ dateKey:key, type:'big3', text:t.text }); });
+    day.brain.forEach(t => { if (t.text && t.done) _statsDoneItems.push({ dateKey:key, type:'brain', text:t.text }); });
+    // Collect pending items
+    day.big3.forEach(t => { if (t.text && !t.done) _statsPendingItems.push({ dateKey:key, type:'big3', text:t.text }); });
+    day.brain.forEach(t => { if (t.text && !t.done) _statsPendingItems.push({ dateKey:key, type:'brain', text:t.text }); });
+  });
+
+  const avgRate = activeDays>0 ? Math.round(rates.filter(r=>{const{done,pending}=calcKPI(r.key);return done+pending>0;}).reduce((a,b)=>a+b.rate,0)/activeDays) : 0;
+  document.getElementById('statAvgRate').textContent = avgRate+'%';
+  document.getElementById('statTotalDone').textContent = totalDone;
+  document.getElementById('statTotalPending').textContent = totalPending;
+  document.getElementById('statActiveDays').textContent = activeDays;
+  document.getElementById('statTimebox').textContent = totalTb;
+
+  const chart = document.getElementById('completionBarChart');
+  chart.innerHTML = '';
+  const dayNames = ['S','M','T','W','T','F','S'];
+  rates.forEach(({ date, rate, key }) => {
+    const wrap = document.createElement('div'); wrap.className='bar-wrap';
+    const h = Math.max(4,(rate/100)*100);
+    const isToday = key===todayKey;
+    wrap.innerHTML = `<div class="bar ${rate>0?'filled':''} ${isToday?'today-bar':''}" style="height:${h}%;${isToday?'background:var(--accent2)':''}" title="${rate}%"></div><div class="bar-label">${currentStatsMode==='week'?dayNames[date.getDay()]:date.getDate()}</div>`;
+    chart.appendChild(wrap);
+  });
+
+  // Also collect hours and items per category
+  const catHours = {};
+  const catItems = {};
+  const catKeys = ['work','health','personal','learning','free'];
+  const catColors = ['var(--cat1)','var(--cat2)','var(--cat3)','var(--cat4)','var(--cat5)'];
+  catKeys.forEach(k => { catHours[k] = 0; catItems[k] = []; });
+
+  days.forEach(d => {
+    const key = dateKey(d);
+    const dd = loadAll()[key];
+    if (dd?.timebox) {
+      dd.timebox.forEach(b => {
+        if (!b.cat || !b.start || !b.end) return;
+        const si = TIMES.indexOf(b.start);
+        const ei = TIMES.indexOf(b.end);
+        const mins = (ei - si) * 30;
+        catHours[b.cat] = (catHours[b.cat] || 0) + mins;
+        if (!catItems[b.cat]) catItems[b.cat] = [];
+        catItems[b.cat].push({ dateKey: key, title: b.title, start: b.start, end: b.end, mins });
+      });
+    }
+  });
+
+  // Store for modal
+  window._catItemsCache = catItems;
+
+  const maxBlocks = Math.max(...catKeys.map(k => catCounts[k]||0), 1);
+  const catEl = document.getElementById('catBreakdown');
+  catEl.innerHTML = '';
+  catKeys.forEach((k, i) => {
+    const count = catCounts[k] || 0;
+    const mins = catHours[k] || 0;
+    const hrs = Math.floor(mins/60);
+    const rem = mins % 60;
+    const timeStr = hrs > 0 ? (rem > 0 ? hrs + 'h ' + rem + 'm' : hrs + 'h') : (mins > 0 ? mins + 'm' : '—');
+    const pct = maxBlocks > 0 ? Math.round((count/maxBlocks)*100) : 0;
+
+    const div = document.createElement('div');
+    div.className = 'cat-item';
+    div.style.borderLeftColor = catColors[i];
+    div.innerHTML = `
+      <div class="cat-name">${CATEGORIES[k].label}</div>
+      <div class="cat-count" style="color:${catColors[i]}">${count}</div>
+      <div class="cat-hours">${timeStr}</div>
+      <div class="cat-bar"><div class="cat-bar-fill" style="width:${pct}%;background:${catColors[i]};"></div></div>`;
+    div.onclick = () => openCatList(k, i);
+    catEl.appendChild(div);
+  });
+}
+
+
+// ========================
+// STATS LIST MODAL
+// ========================
+function openStatsList(type) {
+  const isDone = type === 'done';
+  const items = isDone ? _statsDoneItems : _statsPendingItems;
+  const label = currentStatsMode === 'week' ? '이번 주' : '이번 달';
+  document.getElementById('statsListTitle').innerHTML = isDone
+    ? `<span style="color:var(--done);">✓ ${label} 완료 항목</span>`
+    : `<span style="color:var(--pending);">· ${label} 미완료 항목</span>`;
+
+  const content = document.getElementById('statsListContent');
+  content.innerHTML = '';
+
+  if (items.length === 0) {
+    content.innerHTML = '<div style="text-align:center;padding:30px;color:var(--text3);">' + (isDone ? '완료 항목이 없어요' : '미완료 항목이 없어요 🎉') + '</div>';
+  } else {
+    // Group by date
+    const groups = {};
+    items.forEach(item => {
+      if (!groups[item.dateKey]) groups[item.dateKey] = [];
+      groups[item.dateKey].push(item);
+    });
+
+    Object.entries(groups).sort((a,b) => b[0].localeCompare(a[0])).forEach(([key, groupItems]) => {
+      const group = document.createElement('div');
+      group.className = 'stats-list-group';
+      const dateLabel = document.createElement('div');
+      dateLabel.className = 'stats-list-date';
+      dateLabel.textContent = formatPendingDate(key);
+      group.appendChild(dateLabel);
+
+      groupItems.forEach(item => {
+        const row = document.createElement('div');
+        row.className = 'stats-list-item ' + (isDone ? 'done-item' : 'pending-item');
+        const typeLabel = item.type === 'big3' ? 'Big3' : 'Task';
+        const icon = isDone ? '✓' : '·';
+
+        const typeEl = document.createElement('span');
+        typeEl.className = 'stats-list-type';
+        typeEl.textContent = typeLabel;
+
+        const iconEl = document.createElement('span');
+        iconEl.style.cssText = 'color:' + (isDone ? 'var(--done)' : 'var(--pending)') + ';flex-shrink:0;';
+        iconEl.textContent = icon;
+
+        const textEl = document.createElement('span');
+        textEl.style.flex = '1';
+        textEl.textContent = item.text;
+
+        row.appendChild(typeEl);
+        row.appendChild(iconEl);
+        row.appendChild(textEl);
+
+        // For pending: add send buttons
+        if (!isDone) {
+          const sendBtn = document.createElement('button');
+          sendBtn.className = 'stats-list-send';
+          sendBtn.textContent = '→ 오늘로';
+          sendBtn.onclick = () => {
+            const day = getDay(currentDateKey);
+            day.brain.push({ text: item.text, done: false });
+            setDay(currentDateKey, day);
+            loadDayData();
+            row.style.opacity = '0.4';
+            sendBtn.textContent = '✓ 추가됨';
+            sendBtn.disabled = true;
+          };
+          row.appendChild(sendBtn);
+        }
+
+        group.appendChild(row);
+      });
+      content.appendChild(group);
+    });
+  }
+
+  document.getElementById('statsListOverlay').classList.add('open');
+}
+
+function closeStatsList(e) {
+  if (e && e.target !== document.getElementById('statsListOverlay')) return;
+  document.getElementById('statsListOverlay').classList.remove('open');
+    document.getElementById('sendDateOverlay').classList.remove('open');
+    document.getElementById('datepickerOverlay').classList.remove('open');
+}
+
+function openCatList(catKey, colorIdx) {
+  const catColors = ['var(--cat1)','var(--cat2)','var(--cat3)','var(--cat4)','var(--cat5)'];
+  const color = catColors[colorIdx];
+  const label = CATEGORIES[catKey]?.label || catKey;
+  const items = (window._catItemsCache || {})[catKey] || [];
+  const period = currentStatsMode === 'week' ? '이번 주' : '이번 달';
+
+  document.getElementById('statsListTitle').innerHTML =
+    `<span style="color:${color};">■</span> ${label} · ${period}`;
+
+  const content = document.getElementById('statsListContent');
+  content.innerHTML = '';
+
+  if (items.length === 0) {
+    content.innerHTML = '<div style="text-align:center;padding:30px;color:var(--text3);">이 카테고리에 타임박스가 없어요</div>';
+  } else {
+    // Group by date
+    const groups = {};
+    items.forEach(item => {
+      if (!groups[item.dateKey]) groups[item.dateKey] = [];
+      groups[item.dateKey].push(item);
+    });
+
+    // Total time
+    const totalMins = items.reduce((a, b) => a + b.mins, 0);
+    const totalHrs = Math.floor(totalMins/60);
+    const totalRem = totalMins % 60;
+    const totalStr = totalHrs > 0 ? (totalRem > 0 ? totalHrs + 'h ' + totalRem + 'm' : totalHrs + 'h') : totalMins + 'm';
+
+    const summary = document.createElement('div');
+    summary.style.cssText = 'background:var(--surface2);border-radius:8px;padding:10px 14px;margin-bottom:14px;display:flex;justify-content:space-between;font-size:12px;';
+    summary.innerHTML = `<span style="color:var(--text3);">총 ${items.length}개 블록</span><span style="color:${color};font-family:'Syne',sans-serif;font-weight:700;">${totalStr}</span>`;
+    content.appendChild(summary);
+
+    Object.entries(groups).sort((a,b) => b[0].localeCompare(a[0])).forEach(([key, groupItems]) => {
+      const group = document.createElement('div');
+      group.className = 'stats-list-group';
+      const dateLabel = document.createElement('div');
+      dateLabel.className = 'stats-list-date';
+      dateLabel.textContent = formatPendingDate(key);
+      group.appendChild(dateLabel);
+
+      groupItems.forEach(item => {
+        const row = document.createElement('div');
+        row.className = 'stats-list-item done-item';
+        row.style.cssText = 'display:flex;align-items:center;gap:10px;';
+
+        const timeEl = document.createElement('span');
+        timeEl.style.cssText = 'font-size:10px;color:' + color + ';flex-shrink:0;min-width:80px;';
+        timeEl.textContent = item.start + '–' + item.end;
+
+        const titleEl = document.createElement('span');
+        titleEl.style.flex = '1';
+        titleEl.textContent = item.title;
+
+        const durationEl = document.createElement('span');
+        const h = Math.floor(item.mins/60), m = item.mins%60;
+        durationEl.style.cssText = 'font-size:10px;color:var(--text3);flex-shrink:0;';
+        durationEl.textContent = h > 0 ? (m > 0 ? h+'h '+m+'m' : h+'h') : m+'m';
+
+        row.appendChild(timeEl);
+        row.appendChild(titleEl);
+        row.appendChild(durationEl);
+        group.appendChild(row);
+      });
+      content.appendChild(group);
+    });
+  }
+
+  document.getElementById('statsListOverlay').classList.add('open');
+}
+
+
+// ========================
+// SEND TO DATE
+// ========================
+let _sendDateItemIdx = -1;
+
+function openSendDateModal(idx) {
+  _sendDateItemIdx = idx;
+  const item = _pendingItemsCache[idx];
+  if (!item) return;
+
+  document.getElementById('sendDateItemText').textContent = '"' + item.text + '"';
+
+  // Set default date to today
+  const today = new Date();
+  const todayStr = dateKey(today);
+  document.getElementById('sendDateInput').value = todayStr;
+
+  // Build shortcuts
+  const shortcuts = document.getElementById('sendDateShortcuts');
+  shortcuts.innerHTML = '';
+  const options = [
+    { label: '오늘', offset: 0 },
+    { label: '내일', offset: 1 },
+    { label: '모레', offset: 2 },
+    { label: '이번 주 금', offset: null, day: 5 },
+    { label: '다음 주 월', offset: null, day: 8 },
+  ];
+
+  options.forEach(opt => {
+    const btn = document.createElement('button');
+    btn.className = 'send-date-shortcut';
+    btn.textContent = opt.label;
+    let targetDate = new Date();
+    if (opt.offset !== null) {
+      targetDate.setDate(targetDate.getDate() + opt.offset);
+    } else {
+      const curr = targetDate.getDay();
+      let diff = opt.day - curr;
+      if (diff <= 0) diff += 7;
+      targetDate.setDate(targetDate.getDate() + diff);
+    }
+    const targetStr = dateKey(targetDate);
+    btn.onclick = () => {
+      document.getElementById('sendDateInput').value = targetStr;
+      document.querySelectorAll('.send-date-shortcut').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+    };
+    if (targetStr === todayStr) btn.classList.add('active');
+    shortcuts.appendChild(btn);
+  });
+
+  document.getElementById('sendDateOverlay').classList.add('open');
+}
+
+function confirmSendToDate(target) {
+  const item = _pendingItemsCache[_sendDateItemIdx];
+  if (!item) return;
+  const dateStr = document.getElementById('sendDateInput').value;
+  if (!dateStr) return;
+
+  if (target === 'tb') {
+    // Switch to that date and open TB modal
+    const parts = dateStr.split('-');
+    currentDate = new Date(parseInt(parts[0]), parseInt(parts[1])-1, parseInt(parts[2]));
+    currentDateKey = dateStr;
+    updateHeader();
+    loadDayData();
+    closeSendDateModal();
+    document.querySelectorAll('.modal-overlay.open').forEach(m => m.classList.remove('open'));
+    switchPage('daily');
+    setTimeout(() => {
+      openTbModal(item.tbStart || TIMES[0]);
+      setTimeout(() => {
+        document.getElementById('tbTitle').value = item.text;
+        if (item.tbCat) {
+          document.querySelectorAll('#tbCatPills .cat-pill-btn').forEach(b => b.classList.remove('selected'));
+          const cb = document.querySelector('#tbCatPills .cat-pill-btn[data-cat="' + item.tbCat + '"]');
+          if (cb) cb.classList.add('selected');
+        }
+      }, 60);
+    }, 100);
+    return;
+  }
+
+  const day = getDay(dateStr);
+  if (target === 'big3') {
+    const emptySlot = day.big3.findIndex(b => !b.text);
+    if (emptySlot >= 0) {
+      day.big3[emptySlot] = { text: item.text, done: false };
+    } else {
+      day.brain.push({ text: item.text, done: false });
+    }
+  } else {
+    day.brain.push({ text: item.text, done: false });
+  }
+  markOriginalDone(item);
+  setDay(dateStr, day);
+
+  // If that date is currently open, reload
+  if (dateStr === currentDateKey) loadDayData();
+
+  closeSendDateModal();
+  renderPendingDaily();
+  if (document.getElementById('page-pending').classList.contains('active')) renderPendingPage();
+
+  showSyncStatus('ok');
+}
+
+function closeSendDateModal(e) {
+  if (e && e.target !== document.getElementById('sendDateOverlay')) return;
+  document.getElementById('sendDateOverlay').classList.remove('open');
+    document.getElementById('datepickerOverlay').classList.remove('open');
+}
+
+// ========================
+// UTILS
+// ========================
+function autoResize(el) { el.style.height='auto'; el.style.height=el.scrollHeight+'px'; }
+function escH(s) { return (s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+function genId() { return Math.random().toString(36).substr(2,9); }
+
+document.addEventListener('keydown', e => {
+  if (e.key==='Escape') {
+    document.getElementById('tbModalOverlay').classList.remove('open');
+    document.getElementById('tplEditorOverlay').classList.remove('open');
+    document.getElementById('tplTbModalOverlay').classList.remove('open');
+    document.getElementById('pickPendingOverlay').classList.remove('open');
+    document.getElementById('statsListOverlay').classList.remove('open');
+    document.getElementById('sendDateOverlay').classList.remove('open');
+    document.getElementById('datepickerOverlay').classList.remove('open');
+  }
+});
+
+
+// ========================
+// PENDING SYSTEM
+// ========================
+
+// Store pending items in a global array for safe index-based access
+let _pendingItemsCache = [];
+
+function getAllPendingItems() {
+  const all = loadAll();
+  const today = dateKey(new Date());
+  const items = [];
+  Object.entries(all).sort((a,b) => b[0].localeCompare(a[0])).forEach(([key, day]) => {
+    if (pendingIncludeToday) {
+      if (key > today) return; // include today and past
+    } else {
+      if (key >= today) return; // only strictly past days
+    }
+    (day.big3 || []).forEach((t, i) => {
+      if (t.text && !t.done) items.push({ dateKey: key, type: 'big3', text: t.text });
+    });
+    (day.brain || []).forEach((t, i) => {
+      if (t.text && !t.done) items.push({ dateKey: key, type: 'brain', text: t.text });
+    });
+    (day.timebox || []).forEach((tb) => {
+      if (tb.title && !tb.done) items.push({ dateKey: key, type: 'tb', text: tb.title, tbStart: tb.start, tbEnd: tb.end, tbCat: tb.cat });
+    });
+  });
+  _pendingItemsCache = items;
+  return items;
+}
+
+function formatPendingDate(key) {
+  const d = new Date(key + 'T00:00:00');
+  const today = new Date(); today.setHours(0,0,0,0);
+  const diff = Math.round((today - d) / 86400000);
+  const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  const base = months[d.getMonth()] + ' ' + d.getDate();
+  if (diff === 0) return '오늘';
+  if (diff === 1) return base + ' (어제)';
+  if (diff <= 7) return base + ' (' + diff + '일 전)';
+  return base;
+}
+
+function groupByDate(items) {
+  const groups = {};
+  items.forEach(item => {
+    if (!groups[item.dateKey]) groups[item.dateKey] = [];
+    groups[item.dateKey].push(item);
+  });
+  return groups;
+}
+
+// Safe send: use index into _pendingItemsCache
+
+// Mark original pending item as done in its source day
+function markOriginalDone(item) {
+  if (!item || !item.dateKey) return;
+  const srcDay = getDay(item.dateKey);
+  let changed = false;
+  if (item.type === 'big3') {
+    srcDay.big3.forEach(t => {
+      if (t.text === item.text && !t.done) { t.done = true; changed = true; }
+    });
+  } else if (item.type === 'brain') {
+    srcDay.brain.forEach(t => {
+      if (t.text === item.text && !t.done) { t.done = true; changed = true; }
+    });
+  }
+  if (changed) setDay(item.dateKey, srcDay);
+}
+
+function sendPendingByIdx(target, idx) {
+  const item = _pendingItemsCache[idx];
+  if (!item) return;
+  if (target === 'tb') {
+    // Open TB modal pre-filled
+    openTbModal(item.tbStart || TIMES[0]);
+    setTimeout(() => {
+      document.getElementById('tbTitle').value = item.text;
+      if (item.tbCat) {
+        document.querySelectorAll('#tbCatPills .cat-pill-btn').forEach(b => b.classList.remove('selected'));
+        const cb = document.querySelector('#tbCatPills .cat-pill-btn[data-cat="' + item.tbCat + '"]');
+        if (cb) cb.classList.add('selected');
+      }
+      if (item.tbStart) setDropdownVal('tbStart', item.tbStart);
+      if (item.tbEnd) setDropdownVal('tbEnd', item.tbEnd);
+    }, 60);
+    // Close pick modal if open
+    document.getElementById('pickPendingOverlay').classList.remove('open');
+    document.getElementById('statsListOverlay').classList.remove('open');
+    document.getElementById('sendDateOverlay').classList.remove('open');
+    document.getElementById('datepickerOverlay').classList.remove('open');
+    return;
+  }
+  const day = getDay(currentDateKey);
+  if (target === 'big3') {
+    const emptySlot = day.big3.findIndex(b => !b.text);
+    if (emptySlot >= 0) {
+      day.big3[emptySlot] = { text: item.text, done: false };
+    } else {
+      day.brain.push({ text: item.text, done: false });
+    }
+  } else {
+    day.brain.push({ text: item.text, done: false });
+  }
+  markOriginalDone(item);
+  setDay(currentDateKey, day);
+  loadDayData();
+  // Re-render pending lists
+  renderPendingDaily();
+  if (document.getElementById('page-pending').classList.contains('active')) renderPendingPage();
+}
+
+
+function completePendingItem(item, div, checkbox) {
+  const srcDay = getDay(item.dateKey);
+  let changed = false;
+
+  if (item.type === 'big3') {
+    srcDay.big3.forEach(t => {
+      if (t.text === item.text && !t.done) { t.done = true; changed = true; }
+    });
+  } else if (item.type === 'brain') {
+    srcDay.brain.forEach(t => {
+      if (t.text === item.text && !t.done) { t.done = true; changed = true; }
+    });
+  } else if (item.type === 'tb') {
+    // Timebox: remove from list (mark as handled by deleting or flagging)
+    // We'll add a "done" flag to timebox items
+    srcDay.timebox = (srcDay.timebox || []).map(tb => {
+      if (tb.title === item.text && tb.start === item.tbStart) return { ...tb, done: true };
+      return tb;
+    });
+    changed = true;
+  }
+
+  if (changed) setDay(item.dateKey, srcDay);
+
+  // Visual feedback then remove
+  div.classList.add('checked-off');
+  setTimeout(() => {
+    div.style.maxHeight = div.offsetHeight + 'px';
+    div.style.overflow = 'hidden';
+    div.style.transition = 'max-height 0.3s ease, opacity 0.3s ease, margin 0.3s ease';
+    setTimeout(() => {
+      div.style.maxHeight = '0';
+      div.style.opacity = '0';
+      div.style.marginBottom = '0';
+      setTimeout(() => {
+        div.remove();
+        // Update badge
+        const badge = document.getElementById('pendingBadge');
+        if (badge) badge.textContent = Math.max(0, parseInt(badge.textContent||'0') - 1);
+        // Refresh pending cache
+        getAllPendingItems();
+      }, 300);
+    }, 50);
+  }, 400);
+}
+
+function makePendingItemEl(item, idx, showDateBtn=false) {
+  const div = document.createElement('div');
+  div.className = 'pending-item';
+  const typeLabel = item.type === 'big3' ? 'Big3' : item.type === 'brain' ? 'Task' : 'Time';
+  const typeCls = item.type;
+
+  // Check button
+  const checkbox = document.createElement('input');
+  checkbox.type = 'checkbox';
+  checkbox.className = 'pend-check';
+  checkbox.title = '완료 처리';
+  checkbox.onclick = (e) => { e.stopPropagation(); completePendingItem(item, div, checkbox); };
+
+  const textEl = document.createElement('span');
+  textEl.className = 'pending-item-type ' + typeCls;
+  textEl.textContent = typeLabel;
+
+  const textBody = document.createElement('span');
+  textBody.className = 'pending-item-text';
+  textBody.textContent = item.text;
+  if (item.type === 'tb' && item.tbStart) {
+    const sub = document.createElement('span');
+    sub.style.cssText = 'font-size:10px;color:var(--text3);margin-left:4px;';
+    sub.textContent = item.tbStart;
+    textBody.appendChild(sub);
+  }
+
+  const actions = document.createElement('div');
+  actions.className = 'pending-item-actions';
+
+  const b3btn = document.createElement('button');
+  b3btn.className = 'pend-send-btn to-big3';
+  b3btn.textContent = '→B3';
+  b3btn.onclick = () => sendPendingByIdx('big3', idx);
+
+  const brainBtn = document.createElement('button');
+  brainBtn.className = 'pend-send-btn to-brain';
+  brainBtn.textContent = '→Task';
+  brainBtn.onclick = () => sendPendingByIdx('brain', idx);
+
+  const tbBtn = document.createElement('button');
+  tbBtn.className = 'pend-send-btn to-tb';
+  tbBtn.textContent = '→Time';
+  tbBtn.onclick = () => sendPendingByIdx('tb', idx);
+
+  // Date picker button - only for Pending tab
+  const dateBtn = document.createElement('button');
+  dateBtn.className = 'pend-send-btn';
+  dateBtn.style.cssText = 'color:var(--text3);border-color:var(--border);';
+  dateBtn.textContent = '📅';
+  dateBtn.title = '날짜 선택해서 보내기';
+  dateBtn.onclick = () => openSendDateModal(idx);
+
+
+  actions.appendChild(b3btn);
+  actions.appendChild(brainBtn);
+  actions.appendChild(tbBtn);
+  actions.appendChild(dateBtn);
+
+  div.appendChild(checkbox);
+  div.appendChild(textEl);
+  div.appendChild(textBody);
+  div.appendChild(actions);
+  return div;
+}
+
+function renderPendingDaily() {
+  const items = getAllPendingItems();
+  const badge = document.getElementById('pendingBadge');
+  if (badge) badge.textContent = items.length;
+
+  const list = document.getElementById('pendingDailyList');
+  if (!list) return;
+
+  if (items.length === 0) {
+    list.innerHTML = '<div class="pending-empty">✓ 미완료 항목 없음</div>';
+    return;
+  }
+
+  const groups = groupByDate(items);
+  list.innerHTML = '';
+  Object.entries(groups).sort((a,b) => b[0].localeCompare(a[0])).forEach(([key, groupItems]) => {
+    const groupEl = document.createElement('div');
+    groupEl.className = 'pending-date-group';
+    const label = document.createElement('div');
+    label.className = 'pending-date-label';
+    label.textContent = formatPendingDate(key);
+    groupEl.appendChild(label);
+    groupItems.forEach(item => {
+      const idx = _pendingItemsCache.indexOf(item);
+      groupEl.appendChild(makePendingItemEl(item, idx, true));
+    });
+    list.appendChild(groupEl);
+  });
+}
+
+function togglePendingSection() {
+  const body = document.getElementById('pendingBody');
+  const icon = document.getElementById('pendingToggleIcon');
+  body.classList.toggle('open');
+  icon.classList.toggle('open');
+  if (body.classList.contains('open')) renderPendingDaily();
+}
+
+let pendingFilter = 'all';
+let pendingIncludeToday = false;
+
+function toggleTodayInclude() {
+  pendingIncludeToday = !pendingIncludeToday;
+  const btn = document.getElementById('todayToggleBtn');
+  if (btn) {
+    btn.textContent = pendingIncludeToday ? '오늘포함' : '오늘제외';
+    btn.classList.toggle('on', pendingIncludeToday);
+  }
+  renderPendingPage();
+}
+
+function setPendingFilter(btn, filter) {
+  pendingFilter = filter;
+  document.querySelectorAll('.pf-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  renderPendingPage();
+}
+
+function renderPendingPage() {
+  let items = getAllPendingItems();
+  if (pendingFilter !== 'all') items = items.filter(i => i.type === pendingFilter);
+
+  const list = document.getElementById('pendingPageList');
+  if (!list) return;
+
+  if (items.length === 0) {
+    list.innerHTML = '<div style="text-align:center;padding:60px 20px;color:var(--text3);"><div style="font-size:36px;margin-bottom:12px;">✓</div><div>미완료 항목이 없어요!</div></div>';
+    return;
+  }
+
+  const groups = groupByDate(items);
+  list.innerHTML = '';
+  Object.entries(groups).sort((a,b) => b[0].localeCompare(a[0])).forEach(([key, groupItems]) => {
+    const section = document.createElement('div');
+    section.style.cssText = 'background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:16px 20px;margin-bottom:12px;';
+    const header = document.createElement('div');
+    header.style.cssText = 'font-family:"Syne",sans-serif;font-weight:600;font-size:14px;color:var(--text2);margin-bottom:12px;';
+    header.textContent = formatPendingDate(key) + ' (' + groupItems.length + '개)';
+    section.appendChild(header);
+    groupItems.forEach(item => {
+      const idx = _pendingItemsCache.indexOf(item);
+      const row = makePendingItemEl(item, idx, true);
+      row.style.marginBottom = '6px';
+      // Make actions always visible in page view
+      row.querySelector('.pending-item-actions').style.opacity = '1';
+      section.appendChild(row);
+    });
+    list.appendChild(section);
+  });
+}
+
+// ========================
+// PICK FROM PENDING MODAL
+// ========================
+let _pickPendingTarget = 'brain';
+
+function openPickPendingModal(target) {
+  _pickPendingTarget = target;
+  const titles = { big3: 'Big 3 — 미완료에서 선택', brain: 'Brain Dump — 미완료에서 선택', tb: '타임박스 — 미완료에서 선택' };
+  document.getElementById('pickPendingTitle').textContent = titles[target] || '미완료에서 선택';
+  document.getElementById('pickPendingOverlay').classList.add('open');
+  renderPickPendingList();
+}
+
+function renderPickPendingList() {
+  const items = getAllPendingItems();
+  const list = document.getElementById('pickPendingList');
+  if (!list) return;
+
+  if (items.length === 0) {
+    list.innerHTML = '<div class="pick-pending-empty">미완료 항목이 없어요.<br><span style="font-size:11px;">체크 안 된 과거 항목이 여기 표시돼요.</span></div>';
+    return;
+  }
+
+  list.innerHTML = '';
+  items.forEach((item, idx) => {
+    const typeLabel = item.type === 'big3' ? 'Big3' : item.type === 'brain' ? 'Task' : 'Time';
+    const row = document.createElement('div');
+    row.className = 'pick-pending-item';
+    row.innerHTML = '<span class="ppi-type">' + typeLabel + '</span><span style="flex:1;">' + escH(item.text) + '</span><span class="ppi-date">' + formatPendingDate(item.dateKey) + '</span>';
+    row.onclick = () => {
+      sendPendingByIdx(_pickPendingTarget, idx);
+      if (_pickPendingTarget !== 'tb') closePickPendingModal();
+    };
+    list.appendChild(row);
+  });
+}
+
+function closePickPendingModal(e) {
+  if (e && e.target !== document.getElementById('pickPendingOverlay')) return;
+  document.getElementById('pickPendingOverlay').classList.remove('open');
+    document.getElementById('statsListOverlay').classList.remove('open');
+    document.getElementById('sendDateOverlay').classList.remove('open');
+    document.getElementById('datepickerOverlay').classList.remove('open');
+}
+
+function injectPendingToTbModal() {
+  _tbPickTab = 'pending';
+  if (document.getElementById('tbTabBrain')) {
+    document.getElementById('tbTabBrain').classList.remove('active');
+    document.getElementById('tbTabPending').classList.add('active');
+  }
+  const pendingItems = getAllPendingItems();
+  const list = document.getElementById('tbBrainPickList');
+  list.innerHTML = '';
+
+  if (pendingItems.length === 0) {
+    list.innerHTML = '<div class="brain-pick-empty">미완료 항목이 없어요</div>';
+    return;
+  }
+
+  pendingItems.forEach(item => {
+    const row = document.createElement('div');
+    row.className = 'brain-pick-item';
+    const label = document.createElement('span');
+    label.style.cssText = 'font-size:9px;color:var(--pending);flex-shrink:0;min-width:48px;';
+    label.textContent = formatPendingDate(item.dateKey);
+    const text = document.createElement('span');
+    text.style.flex = '1';
+    text.textContent = item.text;
+    row.appendChild(label);
+    row.appendChild(text);
+    row.onclick = () => {
+      document.getElementById('tbTitle').value = item.text;
+      if (item.tbCat) {
+        document.querySelectorAll('#tbCatPills .cat-pill-btn').forEach(b => b.classList.remove('selected'));
+        const cb = document.querySelector('#tbCatPills .cat-pill-btn[data-cat="' + item.tbCat + '"]');
+        if (cb) cb.classList.add('selected');
+      }
+      document.querySelectorAll('.brain-pick-item').forEach(el => el.classList.remove('picked'));
+      row.classList.add('picked');
+    };
+    list.appendChild(row);
+  });
+}
+
+// ========================
+// INIT
+// ========================
+function init() {
+  updateHeader();
+  renderTimeAxis();
+  loadDayData();
+  renderPendingDaily();
+  currentCalMonth = new Date(currentDate);
+}
+</script>
+
+<!-- FIREBASE SDK -->
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-app.js";
+  import { getFirestore, doc, setDoc, getDocs, collection, query, where } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-firestore.js";
+  import { getAuth, GoogleAuthProvider, signInWithPopup, onAuthStateChanged, signOut as fbSignOut } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-auth.js";
+
+  const firebaseConfig = {
+    apiKey: "AIzaSyAdWCsOTkctpXfwUM8y3Yh5APv2yeFfqKA",
+    authDomain: "hamtodo-11923.firebaseapp.com",
+    projectId: "hamtodo-11923",
+    storageBucket: "hamtodo-11923.firebasestorage.app",
+    messagingSenderId: "564940611171",
+    appId: "1:564940611171:web:fc7e585e5ec7ab96d1a256",
+    measurementId: "G-WSRRNLH206"
+  };
+
+  const app = initializeApp(firebaseConfig);
+  const db = getFirestore(app);
+  const auth = getAuth(app);
+  const provider = new GoogleAuthProvider();
+
+  // Expose auth functions globally
+  window.signInWithGoogle = async () => {
+    try {
+      await signInWithPopup(auth, provider);
+    } catch(e) {
+      console.error('Login error:', e);
+      alert('로그인에 실패했어요. 다시 시도해주세요.');
+    }
+  };
+
+  window.signOut = async () => {
+    await fbSignOut(auth);
+    window.location.reload();
+  };
+
+  // Data functions scoped to user
+  window.saveToFirebaseReal = async (key, data) => {
+    const uid = auth.currentUser?.uid;
+    if (!uid) return;
+    await setDoc(doc(db, 'users', uid, 'days', key), data);
+  };
+
+  window.loadAllFromFirebaseReal = async () => {
+    const uid = auth.currentUser?.uid;
+    if (!uid) return {};
+    const snapshot = await getDocs(collection(db, 'users', uid, 'days'));
+    const result = {};
+    snapshot.forEach(d => { result[d.id] = d.data(); });
+    return result;
+  };
+
+  // Auth state observer
+  onAuthStateChanged(auth, async (user) => {
+    const loginScreen = document.getElementById('loginScreen');
+    const userBadge = document.getElementById('userBadge');
+
+    if (user) {
+      // Hide login, show app
+      loginScreen.style.display = 'none';
+      userBadge.style.display = 'flex';
+      document.getElementById('userAvatar').src = user.photoURL || '';
+      document.getElementById('userName').textContent = user.displayName?.split(' ')[0] || user.email;
+
+      // Load data
+      try {
+        showSyncStatus('loading');
+        const data = await window.loadAllFromFirebaseReal();
+        Object.assign(_cache, data);
+        _cacheLoaded = true;
+        showSyncStatus('ok');
+      } catch(e) {
+        try { Object.assign(_cache, JSON.parse(localStorage.getItem('gravit_data') || '{}')); } catch {}
+        _cacheLoaded = true;
+        showSyncStatus('offline');
+      }
+      init();
+    } else {
+      // Show login screen
+      loginScreen.style.display = 'flex';
+      userBadge.style.display = 'none';
+    }
+  });
+</script>
+
+<!-- PICK FROM PENDING MODAL -->
+<div class="modal-overlay" id="pickPendingOverlay" onclick="closePickPendingModal(event)" style="z-index:250;">
+  <div class="modal" style="z-index:251;">
+    <div class="modal-title" id="pickPendingTitle">미완료 항목에서 선택</div>
+    <div class="pick-pending-list" id="pickPendingList"></div>
+    <div class="modal-actions">
+      <button class="btn-cancel" onclick="closePickPendingModal()">닫기</button>
+    </div>
+  </div>
+</div>
+
+
+<!-- STATS LIST MODAL -->
+<div class="modal-overlay" id="statsListOverlay" onclick="closeStatsList(event)" style="z-index:250;">
+  <div class="stats-list-modal">
+    <div class="modal-title" id="statsListTitle">항목 목록</div>
+    <div id="statsListContent"></div>
+    <div class="modal-actions">
+      <button class="btn-cancel" onclick="closeStatsList()">닫기</button>
+    </div>
+  </div>
+</div>
+
+
+<!-- SEND TO DATE MODAL -->
+<div class="modal-overlay" id="sendDateOverlay" onclick="closeSendDateModal(event)" style="z-index:280;">
+  <div class="send-date-modal">
+    <div class="modal-title" id="sendDateItemText" style="font-size:13px;color:var(--text2);margin-bottom:16px;font-family:'DM Mono',monospace;font-weight:400;line-height:1.5;"></div>
+    <div class="field-label">날짜 선택</div>
+    <div class="send-date-shortcuts" id="sendDateShortcuts"></div>
+    <input type="date" class="send-date-input" id="sendDateInput">
+    <div class="field-label" style="margin-top:14px;">어디에 추가할까요?</div>
+    <div class="send-date-target-btns">
+      <button class="send-date-target-btn sdt-big3" onclick="confirmSendToDate('big3')">Big 3</button>
+      <button class="send-date-target-btn sdt-brain" onclick="confirmSendToDate('brain')">Brain Dump</button>
+      <button class="send-date-target-btn sdt-tb" onclick="confirmSendToDate('tb')">타임박스</button>
+    </div>
+    <div class="modal-actions" style="margin-top:14px;">
+      <button class="btn-cancel" onclick="closeSendDateModal()">취소</button>
+    </div>
+  </div>
+</div>
+
+
+<script>
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('sw.js').catch(() => {});
+  });
+}
+</script>
+
+<!-- DATE PICKER MODAL -->
+<div class="modal-overlay" id="datepickerOverlay" onclick="closeDatePicker(event)" style="z-index:250;">
+  <div class="modal" style="width:320px;max-width:95vw;">
+    <div class="modal-title">날짜 선택</div>
+    <div class="send-date-shortcuts" style="margin-bottom:14px;">
+      <button class="send-date-shortcut active" onclick="pickDate(dateKey(new Date()))">오늘</button>
+      <button class="send-date-shortcut" onclick="pickDate(dateKey(new Date(Date.now()-86400000)))">어제</button>
+      <button class="send-date-shortcut" onclick="pickDate(dateKey(new Date(Date.now()+86400000)))">내일</button>
+      <button class="send-date-shortcut" onclick="pickDate(dateKey(new Date(Date.now()+86400000*2)))">모레</button>
+    </div>
+    <div class="field-label">직접 선택</div>
+    <input type="date" id="datepickerInput" class="modal-input" style="margin-top:6px;" onchange="pickDate(this.value)">
+    <div class="modal-actions">
+      <button class="btn-cancel" onclick="closeDatePicker()">닫기</button>
+    </div>
+  </div>
+</div>
+
+
+<!-- LOGIN SCREEN -->
+<div id="loginScreen">
+  <div class="login-logo">
+    <svg viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <circle cx="32" cy="32" r="28" stroke="#c8ff57" stroke-width="1.5" stroke-dasharray="4 2" opacity="0.3"/>
+      <path d="M32 8 L56 32 L32 56 L8 32 Z" stroke="#c8ff57" stroke-width="1.5" fill="none" opacity="0.6"/>
+      <line x1="32" y1="20" x2="32" y2="44" stroke="#c8ff57" stroke-width="1.5" opacity="0.9"/>
+      <line x1="20" y1="32" x2="44" y2="32" stroke="#c8ff57" stroke-width="1.5" opacity="0.9"/>
+      <circle cx="32" cy="32" r="5" fill="#c8ff57"/>
+      <circle cx="32" cy="8" r="3" fill="#c8ff57" opacity="0.5"/>
+      <circle cx="56" cy="32" r="3" fill="#c8ff57" opacity="0.5"/>
+      <circle cx="32" cy="56" r="3" fill="#c8ff57" opacity="0.5"/>
+      <circle cx="8" cy="32" r="3" fill="#c8ff57" opacity="0.5"/>
+    </svg>
+    <div class="login-wordmark">GRAVIT</div>
+    <div class="login-sub">Planner</div>
+  </div>
+  <div class="login-desc">매일의 계획을 체계적으로.<br>구글 계정으로 시작하세요.</div>
+  <button class="google-login-btn" onclick="signInWithGoogle()">
+    <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+      <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/>
+      <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/>
+      <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l3.66-2.84z" fill="#FBBC05"/>
+      <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/>
+    </svg>
+    Google로 로그인
+  </button>
+</div>
+
+</body>
+</html>

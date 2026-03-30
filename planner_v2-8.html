@@ -418,6 +418,11 @@ body::before { content:''; position:fixed; inset:0; background-image:url("data:i
 </style>
 </head>
 <body>
+<script>
+// Stubs until module loads
+window.signInWithGoogle = () => { alert('로딩 중이에요. 잠시 후 다시 눌러주세요.'); };
+window.signOut = () => { window.location.reload(); };
+</script>
 
 <!-- HEADER -->
 <header class="header">
@@ -2295,7 +2300,7 @@ function init() {
 <script type="module">
   import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-app.js";
   import { getFirestore, doc, setDoc, getDocs, collection, query, where } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-firestore.js";
-  import { getAuth, GoogleAuthProvider, signInWithPopup, onAuthStateChanged, signOut as fbSignOut } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-auth.js";
+  import { getAuth, GoogleAuthProvider, signInWithRedirect, getRedirectResult, onAuthStateChanged, signOut as fbSignOut } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-auth.js";
 
   const firebaseConfig = {
     apiKey: "AIzaSyAdWCsOTkctpXfwUM8y3Yh5APv2yeFfqKA",
@@ -2315,7 +2320,7 @@ function init() {
   // Expose auth functions globally
   window.signInWithGoogle = async () => {
     try {
-      await signInWithPopup(auth, provider);
+      await signInWithRedirect(auth, provider);
     } catch(e) {
       console.error('Login error:', e);
       alert('로그인에 실패했어요. 다시 시도해주세요.');
@@ -2326,6 +2331,11 @@ function init() {
     await fbSignOut(auth);
     window.location.reload();
   };
+
+  // Make sure functions are available before module loads
+  if (!window._authReady) {
+    window._authReady = true;
+  }
 
   // Data functions scoped to user
   window.saveToFirebaseReal = async (key, data) => {
@@ -2342,6 +2352,13 @@ function init() {
     snapshot.forEach(d => { result[d.id] = d.data(); });
     return result;
   };
+
+  // Handle redirect result first
+  try {
+    await getRedirectResult(auth);
+  } catch(e) {
+    console.error('Redirect error:', e);
+  }
 
   // Auth state observer
   onAuthStateChanged(auth, async (user) => {
